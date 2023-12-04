@@ -76,7 +76,6 @@ public:
 
 	void executeAll(Client &client, std::string buffer, int &clientSocket, std::string _password)
 	{
-		std::string wa_hmeeeeeeeed;
 		std::string buffer_temp = buffer;
 		char *str;
 		std::vector<char *> tokens;
