@@ -1,5 +1,5 @@
 #include "irc.hpp"
-hello med fgdfgh
+hello med fgdfgh hghghhg hghghgh 
 class Server
 {
 private:
