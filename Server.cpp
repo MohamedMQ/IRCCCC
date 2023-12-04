@@ -1,5 +1,5 @@
 #include "irc.hpp"
-hello med fgdfgh hghghhg 89898
+
 class Server
 {
 private:
@@ -76,6 +76,7 @@ public:
 
 	void executeAll(Client &client, std::string buffer, int &clientSocket, std::string _password)
 	{
+
 		std::string buffer_temp = buffer;
 		char *str;
 		std::vector<char *> tokens;
