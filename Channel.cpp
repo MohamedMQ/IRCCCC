@@ -6,7 +6,7 @@
 /*   By: rennacir <rennacir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/20 15:55:33 by rennacir          #+#    #+#             */
-/*   Updated: 2023/12/01 21:47:41 by rennacir         ###   ########.fr       */
+/*   Updated: 2023/12/04 13:50:43 by rennacir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,21 @@
 Channel::Channel()
 {
 	this->channel_psw = "";
+}
+
+int Channel::get_num_of_clients()
+{
+	return (this->clients.size());
+}
+
+int Channel::get_limit_num_of_clients()
+{
+	return this->client_limit;
+}
+
+void Channel::set_limit_num_of_clients(int l)
+{
+	this->client_limit = l;
 }
 
 void Channel::set_name(std::string name)
@@ -42,6 +57,11 @@ void Channel::set_channel_psw(std::string psw)
 	this->channel_psw = psw;
 }
 
+std::string Channel::get_channel_psw()
+{
+	return this->channel_psw;
+}
+
 ch_modes Channel::get_modes()
 {
 	return this->modes;
@@ -66,13 +86,13 @@ void Channel::set_mode(char mode, int flag)
 	if (mode == 't')
 		this->modes.t = flag;
 	else if (mode == 'k')
-		this->modes.t = flag;
+		this->modes.k = flag;
 	else if (mode == 'o')
-		this->modes.t = flag;
+		this->modes.o = flag;
 	else if (mode == 'i')
-		this->modes.t = flag;
+		this->modes.i = flag;
 	else if (mode == 'l')
-		this->modes.t = flag;
+		this->modes.l = flag;
 }
 
 void Channel::add_message(std::string username, std::string message)

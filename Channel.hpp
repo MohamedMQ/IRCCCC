@@ -6,7 +6,7 @@
 /*   By: rennacir <rennacir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/20 15:33:51 by rennacir          #+#    #+#             */
-/*   Updated: 2023/12/01 21:43:34 by rennacir         ###   ########.fr       */
+/*   Updated: 2023/12/04 13:50:23 by rennacir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,9 +36,14 @@ class Channel
 		ch_modes modes;
 		std::string channel_psw;
 		std::string channel_topic;
+		int client_limit;
 	public:
 		Channel();
+		int get_num_of_clients();
+		int get_limit_num_of_clients();
+		void set_limit_num_of_clients(int l);
 		void set_channel_psw(std::string psw);
+		std::string get_channel_psw();
 		void set_name(std::string name);
 		std::string get_name();
 		void set_topic(std::string topic);

@@ -76,31 +76,39 @@ public:
 
 	void executeAll(Client &client, std::string buffer, int &clientSocket, std::string _password)
 	{
-		if (!std::strcmp((buffer.substr(0, 4)).c_str(), "USER") && client.get_is_passF())
-			user_command(buffer, client, clientSocket);
-		else if (!std::strcmp((buffer.substr(0, 4)).c_str(), "NICK") && client.get_is_passF())
-			nickname_command(buffer, client, clientSocket);
-		else if (!std::strcmp((buffer.substr(0, 4)).c_str(), "PASS"))
-			pass_command(client, buffer, clientSocket);
-		else if (!std::strcmp((buffer.substr(0, 4)).c_str(), "QUIT") && client.get_is_passF())
+		std::string buffer_temp = buffer;
+		char *str;
+		std::vector<char *> tokens;
+		str = strtok((char *)(buffer.c_str()), " \r");
+		while (str != NULL) {
+			tokens.push_back(str);
+			str = strtok (NULL, " \r");
+		}
+		if (!std::strcmp(tokens[0], "USER") && client.get_is_passF())
+			user_command(buffer_temp, client, clientSocket);
+		else if (!std::strcmp(tokens[0], "NICK") && client.get_is_passF())
+			nickname_command(buffer_temp, client, clientSocket);
+		else if (!std::strcmp(tokens[0], "PASS"))
+			pass_command(client, buffer_temp, clientSocket);
+		else if (!std::strcmp(tokens[0], "QUIT") && client.get_is_passF())
 		{
-			if (quit_command(clientSocket, buffer) == -1)
+			if (quit_command(clientSocket, buffer_temp) == -1)
 				return;
 		}
-		else if (!std::strcmp((buffer.substr(0, 7)).c_str(), "PRIVMSG") && requiredParams(client))
-			privmsg_command(client, buffer);
-		else if (!std::strcmp((buffer.substr(0, 4)).c_str(), "JOIN") && requiredParams(client))
-			join_command(client, buffer);
-		else if (!std::strcmp((buffer.substr(0, 4)).c_str(), "PART") && requiredParams(client))
-			part_command(client, buffer);
-		else if (!std::strcmp((buffer.substr(0, 6)).c_str(), "INVITE") && requiredParams(client))
-			invite_command(client, buffer);
-		else if (!std::strcmp((buffer.substr(0, 4)).c_str(), "MODE") && requiredParams(client))
-			mode_command(client, buffer);
-		else if (!std::strcmp((buffer.substr(0, 5)).c_str(), "TOPIC") && requiredParams(client))
-			topic_command(buffer);
-		else if (!std::strcmp((buffer.substr(0, 4)).c_str(), "KICK") && requiredParams(client))
-			kick_command(client, buffer);
+		else if (!std::strcmp(tokens[0], "PRIVMSG") && requiredParams(client))
+			privmsg_command(client, buffer_temp);
+		else if (!std::strcmp(tokens[0], "JOIN") && requiredParams(client))
+			join_command(client, buffer_temp);
+		else if (!std::strcmp(tokens[0], "PART") && requiredParams(client))
+			part_command(client, buffer_temp);
+		else if (!std::strcmp(tokens[0], "INVITE") && requiredParams(client))
+			invite_command(client, buffer_temp);
+		else if (!std::strcmp(tokens[0], "MODE") && requiredParams(client))
+			mode_command(client, buffer_temp);
+		else if (!std::strcmp(tokens[0], "TOPIC") && requiredParams(client))
+			topic_command(buffer_temp);
+		else if (!std::strcmp(tokens[0], "KICK") && requiredParams(client))
+			kick_command(client, buffer_temp);
 		else if (!requiredParams(client))
 			params_requirements(client, clientSocket);
 		else {
@@ -580,40 +588,31 @@ public:
 
 	//////////////////////////join_command//////////////////////////////////////////////////////////////////////////////
 
-	void add_channel_to_client(Client &client, std::string to_check)
-	{
-		for (int i = 0; i < _channels.size(); i++)
-		{
-			if (_channels[i].get_name() == to_check)
-			{
+	void add_channel_to_client(Client &client, std::string to_check) {
+		for (int i = 0; i < _channels.size() ; i++) {
+			if(_channels[i].get_name() == to_check) {
 				client.add_channel(_channels[i], 0);
 				break;
 			}
 		}
 	}
 
-	void add_client_to_channel(Client &client, std::string to_check)
-	{
-		int a;
-		for (int i = 0; i < _channels.size(); i++)
-		{
-			if (_channels[i].get_name() == to_check)
-			{
+	void add_client_to_channel(Client &client, std::string to_check) {
+		int a ;
+		for (int i = 0; i < _channels.size() ; i++) {
+			if(_channels[i].get_name() == to_check) {
 				_channels[i].add_client(client);
 				break;
 			}
 		}
 	}
 
-	int check_if_invite_only_channel(std::string token)
-	{
-		for (int i = 0; i < _channels.size(); i++)
-		{
-			if (token == _channels[i].get_name())
-			{
+	int check_if_invite_only_channel(std::string token) {
+		for(int i = 0; i < _channels.size(); i++) {
+			if (token == _channels[i].get_name()) {
 				ch_modes ch;
 				ch = _channels[i].get_modes();
-				if (ch.i == 1)
+				if(ch.i == 1)
 					return 1;
 				break;
 			}
@@ -621,12 +620,9 @@ public:
 		return 0;
 	}
 
-	int check_if_client_already_joined(Client &client, std::string token)
-	{
-		for (int i = 0; i < _channels.size(); i++)
-		{
-			if (token == _channels[i].get_name())
-			{
+	int check_if_client_already_joined(Client &client, std::string token) {
+		for (int i = 0; i < _channels.size(); i++) {
+			if (token == _channels[i].get_name()) {
 				if (client.if_element_exist(_channels[i]))
 					return 1;
 				break;
@@ -635,6 +631,41 @@ public:
 		return 0;
 	}
 
+	ch_modes get_modes(std::string channel_name)
+	{
+		ch_modes ch;
+		for (int i = 0; i < _channels.size(); i++) {
+			if (channel_name == _channels[i].get_name()) {
+				ch = _channels[i].get_modes();
+				break;
+			}
+		}
+		return ch;
+	}
+	int not_reach_limit(std::string channel_name)
+	{
+		for (int i = 0; i < _channels.size(); i++) {
+			if (channel_name == _channels[i].get_name()) {
+				if (_channels[i].get_limit_num_of_clients() > _channels[i].get_num_of_clients())
+					return 1;
+				break;
+			}
+		}
+		return 0;
+	}
+	int check_password(std::string channel_name, std::string channel_password)
+	{
+		for (int i = 0; i < _channels.size(); i++)
+		{
+			if (channel_name == _channels[i].get_name())
+			{
+				if (_channels[i].get_channel_psw() == channel_password)
+					return 1;
+				break;
+			}
+		}
+		return 0;
+	}
 	void join_command(Client &client, std::string command)
 	{
 		char *str;
@@ -643,70 +674,53 @@ public:
 		int flag = 0;
 		std::vector<char *> tokens;
 		std::vector<char *> tokens2;
-		std::cout << "size 9bel :" << _channels.size() << std::endl;
 		str = strtok((char *)(command.c_str() + 5), " \r");
-		while (str != NULL)
-		{
+		while (str != NULL) {
 			tokens.push_back(str);
-			str = strtok(NULL, " \r");
+			str = strtok (NULL, " \r");
 		}
-		if (tokens.size() != 1)
+		if (tokens.size() >= 1)
 		{
-			// split it to take the first one
-			str2 = strtok((char *)(command.c_str() + 5), " \r");
+			str2 = strtok(tokens[0], ",\r");
 			while (str2 != NULL)
 			{
 				tokens2.push_back(str2);
-				str2 = strtok(NULL, " \r");
-			}
-			// check if this channel is already exist
-			if (check_channel_if_exist(tokens2[0]))
-			{
-				// channel already exist
-				if (check_if_client_already_joined(client, tokens2[0]))
-					return;
-				if (!check_if_invite_only_channel(tokens2[0]) || (check_if_invite_only_channel(tokens2[0]) && client.get_is_invited(tokens2[0])))
-				{
-					add_client_to_channel(client, tokens2[0]);
-					add_channel_to_client(client, tokens2[0]);
-				}
-				else
-					std::cerr << "channel is invite only" << std::endl;
-			}
-			else
-			{
-				// channel does not exist
-				Channel channel;
-				channel.set_name(tokens2[0]);
-				_channels.push_back(channel);
-				client.add_channel(channel, 1);
-				add_client_to_channel(client, channel.get_name());
-			}
-		}
-		else
-		{
-			str2 = strtok((char *)(command.c_str() + 5), ",\r\n");
-			while (str2 != NULL)
-			{
-				tokens2.push_back(str2);
-				str2 = strtok(NULL, ",\r\n");
+				str2 = strtok (NULL, ",\r");
+
 			}
 			while (i < tokens2.size())
 			{
 				if (tokens2[i][0] == '#')
 				{
-					if (check_channel_if_exist(tokens2[i]))
+					if(check_channel_if_exist(tokens2[i]))
 					{
-						// channel already exist
-						if (check_if_client_already_joined(client, tokens2[0]))
-							continue;
-						if (!check_if_invite_only_channel(tokens2[i]) || (check_if_invite_only_channel(tokens2[0]) && client.get_is_invited(tokens2[0])))
+						ch_modes ch ;
+						ch = get_modes(tokens2[i]);
+						if (check_if_client_already_joined(client, tokens2[i]))
 						{
-							add_client_to_channel(client, tokens2[i]);
-							add_channel_to_client(client, tokens2[i]);
+							i++;
+							continue;
 						}
-						else
-							std::cerr << "channel is invite only" << std::endl;
+						if (check_if_invite_only_channel(tokens2[i]) && !client.get_is_invited(tokens2[i]))
+						{
+							i++;
+							std::cout << "Error(473): #chan Cannot join channel (invite only)" << std::endl;
+							continue;
+						}
+						if (ch.l == 1 && !not_reach_limit(tokens2[i]))
+						{
+							i++;
+							std::cout << "Error(471): #chan Cannot join channel (channel is full)" << std::endl;
+							continue;
+						}
+						if ((tokens.size() < 2 && ch.k == 1) || (tokens.size() >=2 && ch.k == 1 && !check_password(tokens2[i], tokens[1])))
+						{
+							i++;
+							std::cout << "Error(475): #chan Cannot join channel (incorrect channel key)" << std::endl;
+							continue;
+						}
+						add_client_to_channel(client, tokens2[i]);
+						add_channel_to_client(client, tokens2[i]);
 					}
 					else
 					{
@@ -722,17 +736,15 @@ public:
 				i++;
 			}
 		}
-		std::cout << "size be3d :" << _channels.size() << std::endl;
+		else
+			std::cout << "no enough parameters" << std::endl;
+		std::cout <<"size be3d :" <<  _channels.size() << std::endl;
 	}
-
 	/////////////////////////////////////part_command///////////////////////////////////////////////////////////////////
 
-	void part_from_channel(Client &client, std::string token)
-	{
-		for (int i = 0; i < _channels.size(); i++)
-		{
-			if (token == _channels[i].get_name())
-			{
+	void part_from_channel(Client &client, std::string token) {
+		for (int i = 0; i < _channels.size() ; i++) {
+			if (token == _channels[i].get_name()) {
 				client.leave_channel(_channels[i]);
 				_channels[i].remove_client(client);
 				break;
@@ -740,12 +752,9 @@ public:
 		}
 	}
 
-	int check_if_client_inside_channel(Client &client, std::string token)
-	{
-		for (int i = 0; i < _channels.size(); i++)
-		{
-			if (_channels[i].get_name() == token)
-			{
+	int check_if_client_inside_channel(Client &client, std::string token) {
+		for (int i = 0; i < _channels.size(); i++) {
+			if (_channels[i].get_name() == token) {
 				if (client.if_element_exist(_channels[i]))
 					return 1;
 			}
@@ -753,8 +762,7 @@ public:
 		return 0;
 	}
 
-	void part_command(Client &client, std::string buffer)
-	{
+	void part_command(Client &client, std::string buffer) {
 		char *str;
 		char *str2;
 		int i = 0;
@@ -762,50 +770,30 @@ public:
 		std::vector<char *> tokens;
 		std::vector<char *> tokens2;
 		str = strtok((char *)(buffer.c_str() + 5), " \r");
-		while (str != NULL)
-		{
+		while (str != NULL) {
 			tokens.push_back(str);
-			str = strtok(NULL, " \r");
+			str = strtok (NULL, " \r");
 		}
-		if (tokens.size() != 1)
+		if (tokens.size() >= 1)
 		{
-			// split it to take the first one
-			str2 = strtok((char *)(buffer.c_str() + 5), " \r");
+			str2 = strtok(tokens[0], ",\r");
 			while (str2 != NULL)
 			{
 				tokens2.push_back(str2);
-				str2 = strtok(NULL, " \r\n");
+				str2 = strtok (NULL, ",\r");
 			}
-			// check if this channel is exist in this client
-			if (check_if_client_inside_channel(client, tokens2[0]))
-				part_from_channel(client, tokens2[0]);
-			else
-				std::cerr << client.get_username() << " " << tokens2[0] << " :No such channel" << std::endl;
-		}
-		else
-		{
-			str2 = strtok((char *)(buffer.c_str() + 5), ",\r\n");
-			while (str2 != NULL)
-			{
-				tokens2.push_back(str2);
-				str2 = strtok(NULL, ",\r\n");
-			}
-			while (i < tokens2.size())
-			{
-				if (tokens2[i][0] == '#')
-				{
-					if (check_if_client_inside_channel(client, tokens2[i]))
-						part_from_channel(client, tokens2[i]);
+			while (i < tokens2.size()) {
+				if (tokens2[i][0] == '#') {
+					if(check_if_client_inside_channel(client, tokens2[i]))
+						part_from_channel(client ,tokens2[i]);
 					else
-						std::cerr << client.get_username() << " " << tokens2[0] << " :No such channel" << std::endl;
-				}
-				else
-					std::cerr << client.get_username() << " " << tokens2[0] << " :No such channel" << std::endl;
+						std::cerr << "Error(442): #chan You're not on that channel" << std::endl;
+				} else
+					std::cerr << "Reply(403): #chdfgan No such channel" << std::endl;
 				i++;
 			}
 		}
 	}
-
 	//////////////////////////////////invite_command//////////////////////////////////////////////////////////////////////
 
 	void add_channel_to_invited(std::string token0, std::string token1)
@@ -906,9 +894,9 @@ public:
 
 	//////////////////////////////mode_command//////////////////////////////////////////////////////////////////////////
 
-	void set_channel_psw_and_mode(std::string token, std::string password, int flag)
+	void set_channel_psw_and_mode(std::string token, std::string password,  int flag)
 	{
-		for (int i = 0; i < _channels.size(); i++)
+		for (int i = 0; i < _channels.size() ; i++)
 		{
 			if (token == _channels[i].get_name())
 			{
@@ -927,7 +915,7 @@ public:
 		std::map<int, Client>::iterator iter;
 		if (check_if_client_exist(token))
 		{
-			for (iter = _clients.begin(); iter != _clients.end(); iter++)
+			for (iter = _clients.begin() ; iter != _clients.end() ; iter++)
 			{
 				if (token == (*iter).second.get_nickname())
 				{
@@ -944,11 +932,11 @@ public:
 	void change_client_mode_o(std::string client_name, std::string channel_name, int flag)
 	{
 		std::map<int, Client>::iterator iter;
-		for (iter = _clients.begin(); iter != _clients.end(); iter++)
+		for (iter = _clients.begin() ; iter != _clients.end() ; iter++)
 		{
 			if (client_name == (*iter).second.get_nickname())
 			{
-				for (int j = 0; j < _channels.size(); j++)
+				for (int j = 0; j < _channels.size() ; j++)
 				{
 					if (_channels[j].get_name() == channel_name)
 					{
@@ -967,7 +955,44 @@ public:
 		{
 			if (_channels[i].get_name() == token)
 			{
-				_channels[i].set_mode(mode, 1);
+				_channels[i].set_mode(mode, flag);
+				break;
+			}
+		}
+	}
+
+	void print_modes(std::string channel_name)
+	{
+		ch_modes ch;
+		for (int i = 0; i < _channels.size() ; i++)
+		{
+			if (_channels[i].get_name() == channel_name)
+			{
+				ch = _channels[i].get_modes();
+				std::cout << "i :" << ch.i << " t :" << ch.t << " k :" << ch.k << " l :" << ch.l << " o :" << ch.o << std::endl;
+			}
+		}
+	}
+
+	int check_is_int(const char *limit)
+	{
+		int i = 0;
+		while (limit[i] && limit[i] != ' ')
+		{
+			if (limit[i] < '0' || limit[i] > '9')
+				return 0;
+			i++;
+		}
+		return 1;
+	}
+
+	void set_limit(std::string channel_name, std::string sett)
+	{
+		for (int i = 0; i < _channels.size() ; i++)
+		{
+			if (_channels[i].get_name() == channel_name)
+			{
+				_channels[i].set_limit_num_of_clients(atoi(sett.c_str()));
 				break;
 			}
 		}
@@ -977,29 +1002,64 @@ public:
 	{
 		char *str;
 		std::string password;
+		std::string limit;
 		const char *modes = buffer.c_str();
 		std::vector<char *> tokens;
-		str = strtok((char *)(buffer.c_str() + 5), " \r\n");
+		str = strtok((char *)(buffer.c_str() + 5), " \r");
 		while (str != NULL)
 		{
 			tokens.push_back(str);
-			str = strtok(NULL, " \r\n");
+			str = strtok (NULL, " \r");
 		}
-		if (check_channel_if_exist(tokens[0]))
+		if (!check_channel_if_exist(tokens[0]))
 		{
-			if (!std::strcmp(tokens[1], "+k") || !std::strcmp(tokens[1], "+o"))
+			std::cerr << "Reply(403): #chasdfn No such channel" << std::endl;
+			return ;
+		}
+		if (!check_client_is_op(client, tokens[0]))
+		{
+			std::cerr << "Error(482): #chan You must have channel op access or above to set channel " << std::endl;
+			return ;
+		}
+		if(check_channel_if_exist(tokens[0]) && check_client_is_op(client, tokens[0]))
+		{
+			if ( !std::strcmp(tokens[1], "+k") || !std::strcmp(tokens[1], "+o") || !std::strcmp(tokens[1], "+l"))
 			{
 				if (!std::strcmp(tokens[1], "+k"))
 				{
-					int pos = buffer.find(tokens[2]);
-					password = buffer.substr(pos);
-					set_channel_psw_and_mode(tokens[0], password, 1);
+					if (tokens.size() >= 3)
+					{
+						std::string s(tokens[2]);
+						if (s.find("\r") != std::string::npos)
+							password = s.substr(0, s.size() - 1);
+						else
+							password = s;
+						set_channel_psw_and_mode(tokens[0], password, 1);
+					}
+					else
+						std::cerr << "Not enough parameters" << std::endl;
 				}
 				else if (!std::strcmp(tokens[1], "+o"))
 				{
-					if (check_if_client_exist(tokens[2]) && check_if_client_already_joined(client, tokens[0]) && check_new_already_join(tokens[2], tokens[0]) && check_client_is_op(client, tokens[0]))
+					if (check_if_client_exist(tokens[2]) && check_if_client_already_joined(client, tokens[0])
+						&& check_new_already_join(tokens[2], tokens[0]))
+					{
 						change_client_mode_o(tokens[2], tokens[0], 1);
+					}
 				}
+				else if (!std::strcmp(tokens[1], "+l"))
+				{
+					int pos = buffer.find(tokens[2]);
+					limit = buffer.substr(pos);
+					if (!check_is_int(limit.c_str()))
+					{
+						std::cout << "must be int error" << std::endl;
+						return;
+					}
+					set_limit(tokens[0], limit);
+					set_channel_mode(tokens[0], 'l', 1);
+				}
+
 			}
 			else if (!std::strcmp(tokens[1], "-k") || !std::strcmp(tokens[1], "-o"))
 			{
@@ -1007,27 +1067,26 @@ public:
 					set_channel_psw_and_mode(tokens[0], "", 0);
 				else if (!std::strcmp(tokens[1], "-o"))
 				{
-					if (check_if_client_exist(tokens[2]) && check_if_client_already_joined(client, tokens[0]) && check_new_already_join(tokens[2], tokens[0]) && check_client_is_op(client, tokens[0]))
+					if (check_if_client_exist(tokens[2]) && check_if_client_already_joined(client, tokens[0])
+						&& check_new_already_join(tokens[2], tokens[0]))
 					{
 						change_client_mode_o(tokens[2], tokens[0], 0);
 					}
 				}
+				if (!std::strcmp(tokens[1], "-l"))
+					set_channel_mode(tokens[0], 'l', 0);
 			}
-			else if (!std::strcmp(tokens[1], "+i") || !std::strcmp(tokens[1], "+l") || !std::strcmp(tokens[1], "+t"))
+			else if (!std::strcmp(tokens[1], "+i") || !std::strcmp(tokens[1], "+t"))
 			{
 				if (!std::strcmp(tokens[1], "+i"))
 					set_channel_mode(tokens[0], 'i', 1);
-				else if (!std::strcmp(tokens[1], "+l"))
-					set_channel_mode(tokens[0], 'l', 1);
 				else if (!std::strcmp(tokens[1], "+t"))
 					set_channel_mode(tokens[0], 't', 1);
 			}
-			else if (!std::strcmp(tokens[1], "-i") || !std::strcmp(tokens[1], "-l") || !std::strcmp(tokens[1], "-t"))
+			else if (!std::strcmp(tokens[1], "-i") || !std::strcmp(tokens[1], "-t"))
 			{
 				if (!std::strcmp(tokens[1], "-i"))
 					set_channel_mode(tokens[0], 'i', 0);
-				else if (!std::strcmp(tokens[1], "-l"))
-					set_channel_mode(tokens[0], 'l', 0);
 				else if (!std::strcmp(tokens[1], "-t"))
 					set_channel_mode(tokens[0], 't', 0);
 			}
@@ -1035,8 +1094,9 @@ public:
 		else
 		{
 			std::cerr << "no such channel" << std::endl;
-			return;
+			return ;
 		}
+		print_modes(tokens[0]);
 	}
 	/////////////////////////////////topic_command////////////////////////////////////////////////////////////
 
