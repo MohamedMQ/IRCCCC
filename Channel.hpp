@@ -6,7 +6,7 @@
 /*   By: rennacir <rennacir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/20 15:33:51 by rennacir          #+#    #+#             */
-/*   Updated: 2023/12/04 13:50:23 by rennacir         ###   ########.fr       */
+/*   Updated: 2023/12/05 14:43:02 by rennacir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,7 @@ class Channel
 {
 	private:
 		std::vector<std::string> clients;
-		std::map<std::string, std::string> messages;
+		std::vector<privmsg> channel_private_messages;
 		std::string name;
 		ch_modes modes;
 		std::string channel_psw;

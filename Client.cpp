@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmaqbour <mmaqbour@student.42.fr>          +#+  +:+       +#+        */
+/*   By: rennacir <rennacir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/20 15:31:12 by rennacir          #+#    #+#             */
-/*   Updated: 2023/12/04 15:19:27 by mmaqbour         ###   ########.fr       */
+/*   Updated: 2023/12/05 14:25:04 by rennacir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -156,9 +156,7 @@ void Client::set_private_message(std::string username, std::string message)
 	else
 	{
 		privmsg prv;
-		std::vector<std::string> messages;
 		prv.user = username;
-		prv.messages = messages;
 		prv.messages.push_back(message);
 		this->private_messages.push_back(prv);
 	}
