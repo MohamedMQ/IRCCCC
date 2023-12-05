@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rennacir <rennacir@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmaqbour <mmaqbour@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/20 15:55:33 by rennacir          #+#    #+#             */
-/*   Updated: 2023/12/04 14:56:38 by rennacir         ###   ########.fr       */
+/*   Updated: 2023/12/05 14:13:49 by mmaqbour         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -97,7 +97,7 @@ void Channel::set_mode(char mode, int flag)
 
 void Channel::add_message(std::string username, std::string message)
 {
-	this->messages[username] = message;
+	this->messages.insert(std::make_pair(username, message));
 }
 
 Channel::~Channel()
