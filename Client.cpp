@@ -6,7 +6,7 @@
 /*   By: mmaqbour <mmaqbour@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/20 15:31:12 by rennacir          #+#    #+#             */
-/*   Updated: 2023/12/03 16:40:08 by mmaqbour         ###   ########.fr       */
+/*   Updated: 2023/12/04 15:19:27 by mmaqbour         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,9 +15,9 @@
 
 Client::Client()
 {
-	this->nickname = "UNKNOWN";
-	this->real_name = "UNKNOWN";
-	this->username = "UNKNOWN";
+	this->nickname = "Anonymous";
+	this->real_name = "Anonymous";
+	this->username = "Anonymous";
 	this->is_user = 0;
 	this->is_pass = 0;
 	this->is_nick = 0;

@@ -206,10 +206,7 @@ public:
 				_pollFds[i].fd = clientSocket;
 				_pollFds[i].events = POLLIN;
 				_pollFds[i].revents = 0;
-				// Client *client =
-				// Client client;
 				_clients.insert(std::make_pair(_pollFds[i].fd, Client()));
-				// _clients.push_back(clientSocket);
 			}
 			for (long unsigned int j = 1; j <= _clients.size(); j++)
 			{
@@ -293,65 +290,52 @@ public:
 		char *str;
 		int count = 0;
 		str = strtok((char *)(command.c_str() + 4), " ");
-		while (str != NULL)
-		{
+		while (str != NULL) {
 			count++;
 			str = strtok(NULL, " ");
 		}
-		if (count < 4)
-		{
-			std::cerr << "Error(461): USER Not enough parameters" << std::endl;
+		if (count < 4) {
+			// std::cerr << "Error(461): USER Not enough parameters" << std::endl;
 			return 0;
 		}
 		return 1;
 	}
 
-	void user_command(std::string _command, Client &client, int &socket)
-	{
-		if (client.get_is_userF() == 0)
-		{
-			if (!pars_user_command(_command))
+	void user_command(std::string _command, Client &client, int &socket) {
+		if (client.get_is_userF() == 0) {
+			if (!pars_user_command(_command)) {
+				std::string response = ":" + this->getServerName() + " 461 " + client.get_nickname() + " USER :Not enough parameters\r\n";
+				int bytes_sent = send(socket, response.c_str(), response.size(), 0);
 				return;
+			}
 			fill_client(_command, client);
+			std::string response = ":" + this->getServerName() + " 001 " + _clients[socket].get_nickname() + " :Welcome to the IRC Network " + _clients[socket].get_nickname() + "!" + _clients[socket].get_username() + "@" + this->getServerName() + "\r\n";
+			int bytes_sent = send(socket, response.c_str(), response.size(), 0);
 			client.set_is_userF(1);
 		}
 	}
 
 	////////////////////////////////////////pass_command////////////////////////////////////////////////////////////////
 
-	void pass_command(Client &client, std::string _command, int &socket)
-	{
+	void pass_command(Client &client, std::string _command, int &socket) {
 		std::string response;
 		int bytes_sent;
 
-		if (_command.substr(0, 4) == "PASS")
-		{
-			if (client.get_is_passF() == 0)
-			{
-				if (!std::strcmp(_command.c_str() + 5, _password.c_str()))
-				{
-					response = ":" + this->getServerName() + " 001 " + _clients[socket].get_nickname() + " :Welcome to the IRC Network " + _clients[socket].get_nickname() + "!" + _clients[socket].get_username() + "@" + this->getServerName() + "\r\n";
-					bytes_sent = send(socket, response.c_str(), response.size(), 0);
+		if (_command.substr(0, 4) == "PASS") {
+			if (client.get_is_passF() == 0) {
+				if (!std::strcmp(_command.c_str() + 5, _password.c_str())) {
 					client.set_is_passF(1);
-					// std::cout << "You are now authentified" << std::endl;
 					return;
-				}
-				else
-				{
+				} else {
 					response = ":" + this->getServerName() + " 464 " + client.get_nickname() + " :Password incorrect\r\n";
 					bytes_sent = send(socket, response.c_str(), response.size(), 0);
 					client.set__retry_pass();
-					// std::cout << "Wrong Password" << std::endl;
 				}
-			}
-			else
-			{
+			} else {
 				response = ":" + this->getServerName() + " 462 " + client.get_nickname() + " :You may not reregister\r\n";
 				bytes_sent = send(socket, response.c_str(), response.size(), 0);
-				// std::cerr << "safi ghiyerha " << std::endl;
 			}
-			if (client.get__retry_pass() == 3)
-			{
+			if (client.get__retry_pass() == 3) {
 				response = ":" + this->getServerName() + " 465 " + client.get_nickname() + " :Too many incorrect password attempts. You are being kicked out.\r\n";
 				bytes_sent = send(socket, response.c_str(), response.size(), 0);
 				close(socket);
@@ -365,10 +349,8 @@ public:
 
 	/////////////////////////////////////////quit_command///////////////////////////////////////////////////////////////
 
-	int quit_command(int &socket, std::string command)
-	{
-		if (!std::strcmp((command.substr(0, 4)).c_str(), "QUIT"))
-		{
+	int quit_command(int &socket, std::string command) {
+		if (!std::strcmp((command.substr(0, 4)).c_str(), "QUIT")) {
 			std::cout << "Client disconnected 2" << std::endl;
 			close(socket);
 			_clients.erase(socket);
@@ -383,13 +365,20 @@ public:
 	int pars_nickname(std::string nickname)
 	{
 		int i = 0;
-		if (!((nickname[i] >= 'a' && nickname[i] <= 'z') || (nickname[i] >= 'A' && nickname[i] <= 'Z') || nickname[i] == '_'))
-		{
+		if (!(nickname[i] >= 'a' && nickname[i] <= 'z')
+			|| (nickname[i] >= 'A' && nickname[i] <= 'Z')
+			|| nickname[i] == '_') {
 			return 0;
 		}
 		for (int i = 0; i < nickname.size(); i++)
 		{
-			if ((nickname[i] >= 'a' && nickname[i] <= 'z') || (nickname[i] >= 'A' && nickname[i] <= 'Z') || (nickname[i] >= '1' && nickname[i] <= '9') || nickname[i] == '_')
+			if ((nickname[i] >= 'a' && nickname[i] <= 'z')
+				|| (nickname[i] >= 'A' && nickname[i] <= 'Z')
+				|| (nickname[i] >= '1' && nickname[i] <= '9')
+				|| nickname[i] == '_' || nickname[i] == '['
+				|| nickname[i] == ']' || nickname[i] == '}'
+				|| nickname[i] == '{' || nickname[i] == '\\'
+				|| nickname[i] == '|')
 				continue;
 			else
 				return 0;
@@ -397,59 +386,23 @@ public:
 		return 1;
 	}
 
-	// void nickname_command(std::string buffer, Client &client, int &clientSocket) {
-	// 	char *str;
-	// 	std::map<int, Client>::iterator ptr;
-	// 	// std::cout << "9beeel :" << client.get_nickname() << std::endl;
-	// 	if(!std::strcmp((buffer.substr(0,4)).c_str(), "NICK")) {
-	// 		std::vector<std::string> tokens;
-	// 		str = strtok((char *)(buffer.c_str()), " \r");
-	// 		while (str != NULL) {
-	// 			tokens.push_back(str);
-	// 			str = strtok (NULL, " \r");
-	// 		}
-	// 		if (tokens.size() == 1)
-	// 			std::cerr << "Error(431): No nickname given" << std::endl;
-	// 		else if (tokens.size() >= 2) {
-	// 			for (ptr = _clients.begin() ; ptr != _clients.end() ; ptr++) {
-	// 				if((*ptr).second.get_nickname() == tokens[1]) {
-	// 					std::string response = ":" + this->getServerName() + " 433 " + client.get_nickname() + " " + tokens[1] + " :Nickname is already in use\r\n";
-	// 					int bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
-	// 					// std::cerr << "Error(433): "<< (*ptr).second.get_nickname() << " Nickname is already in use" << std::endl;
-	// 					return;
-	// 				}
-	// 			}
-	// 			if (!pars_nickname(tokens[1])) {
-	// 				std::string response = ":" + this->getServerName() + " 432 " + client.get_nickname() + " :Erroneous Nickname\r\n";
-	// 				int bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
-	// 				return ;
-	// 			}
-	// 			std::string response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + this->getServerName() + " NICK :" + tokens[1] + "\r\n";
-	// 			int bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
-	// 			client.set_nickname(tokens[1]);
-	// 			client.set_is_nickF(1);
-	// 		}
-	// 	}
-	// }
-
-	void nickname_command(std::string buffer, Client &client, int &clientSocket)
-	{
+	void nickname_command(std::string buffer, Client &client, int &clientSocket) {
 		char *str;
+		std::string response;
+		int bytes_sent;
 		std::map<int, Client>::iterator ptr;
 		std::vector<std::string> tokens;
-		// std::cout << "NICK 1\n";
+
 		if (buffer.find(":") == 5 && !client.get_is_nickF())
 		{
-			// std::cout << "NICK 2\n";
-			std::string response = ":" + this->getServerName() + " 432 " + "*" + " :Erroneous Nickname\r\n";
-			int bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+			response = ":" + this->getServerName() + " 432 " + "*" + " :Erroneous Nickname\r\n";
+			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 			close(clientSocket);
 			_clients.erase(clientSocket);
 			clientSocket = -1;
 		}
 		else if (!client.get_is_nickF())
 		{
-			// std::cout << "NICK 3\n";
 			str = strtok((char *)(buffer.c_str()), " \r");
 			while (str != NULL)
 			{
@@ -457,63 +410,63 @@ public:
 				str = strtok(NULL, " \r");
 			}
 			std::string s(tokens[1]);
-			// std::cout << "NICK 4\n";
 			if (!pars_nickname(s))
 			{
-				std::string response = ":" + this->getServerName() + " 432 " + client.get_nickname() + " :Erroneous Nickname\r\n";
-				int bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+				response = ":" + this->getServerName() + " 432 " + client.get_nickname() + " :Erroneous Nickname\r\n";
+				bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 				close(clientSocket);
 				_clients.erase(clientSocket);
 				clientSocket = -1;
 				return;
 			}
 			if (check_if_client_exist(s)) {
-				std::string response = ":" + this->getServerName() + " 433 " + client.get_nickname() + " " + s + " :Nickname is already in use\r\n";
-				int bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+				response = ":" + this->getServerName() + " 433 " + client.get_nickname() + " " + s + " :Nickname is already in use\r\n";
+				bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 				close(clientSocket);
 				_clients.erase(clientSocket);
 				clientSocket = -1;
 				return;
-				// client.set_nickname(s);
 			}
+			response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + this->getServerName() + " NICK :" + s + "\r\n";
+			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 			client.set_nickname(s);
-			std::string response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + this->getServerName() + " NICK :" + s + "\r\n";
-			int bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 			client.set_is_nickF(1);
-			// std::cout << "NICK 5\n";
 		}
 		else
 		{
-			str = strtok((char *)(buffer.c_str()), " \r");
+			str = strtok((char *)(buffer.c_str()), " ");
 			while (str != NULL)
 			{
 				tokens.push_back(str);
-				str = strtok(NULL, " \r");
+				str = strtok(NULL, " ");
 			}
-			if (tokens.size() == 0)
-				std::cerr << "Error(431): No nickname given" << std::endl;
-			else if (tokens.size() >= 2)
+			if (tokens.size() >= 2)
 			{
+				if (!std::strcmp(tokens[1].c_str(), ":")) {
+					std::cout << "HERE [" << tokens[1] << "] NOW\n";
+					response = ":" + this->getServerName() + " 431 " + client.get_nickname() + " :No nickname given\r\n";
+					bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+					return;
+				}
 				for (ptr = _clients.begin(); ptr != _clients.end(); ptr++)
 				{
 					if ((*ptr).second.get_nickname() == tokens[1])
 					{
-						std::string response = ":" + this->getServerName() + " 433 " + client.get_nickname() + " " + tokens[1] + " :Nickname is already in use\r\n";
-						int bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+						response = ":" + this->getServerName() + " 433 " + client.get_nickname() + " " + tokens[1] + " :Nickname is already in use\r\n";
+						bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 						return;
 					}
 				}
 				if (!pars_nickname(tokens[1]))
 				{
-					std::string response = ":" + this->getServerName() + " 432 " + client.get_nickname() + " :Erroneous Nickname\r\n";
-					int bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+					response = ":" + this->getServerName() + " 432 " + client.get_nickname() + " :Erroneous Nickname\r\n";
+					bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 					return;
 				}
-				std::string response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + this->getServerName() + " NICK :" + tokens[1] + "\r\n";
-				int bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+				response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + this->getServerName() + " NICK :" + tokens[1] + "\r\n";
+				bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 				client.set_nickname(tokens[1]);
 				client.set_is_nickF(1);
-				return;
 			}
 		}
 	}
@@ -1222,13 +1175,29 @@ public:
 
 	// kick #chann rida reason
 	////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	void eraseAllClients() {
+		for (long unsigned int j = 1; j <= _clients.size(); j++) {
+			if (_pollFds[j].fd != -1 && _pollFds[j].fd != 0)
+				close(_pollFds[j].fd);
+		}
+		_clients.clear();
+		close(_pollFds[0].fd);
+	}
 };
+
+Server server("", 0);
+
+void signal_handler(int sig) {
+	server.eraseAllClients();
+	exit (0);
+}
 
 int main(int ac, char **av)
 {
 	int socket;
+	signal(SIGINT, signal_handler);
 
-	Server server("", 0);
 	if (ac != 3)
 	{
 		std::cout << "Wrong parametres !!!\nUsage: ./ft_irc (port) (password)\n";
