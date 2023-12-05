@@ -6,7 +6,7 @@
 /*   By: rennacir <rennacir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/20 15:55:33 by rennacir          #+#    #+#             */
-/*   Updated: 2023/12/04 13:50:43 by rennacir         ###   ########.fr       */
+/*   Updated: 2023/12/04 14:56:38 by rennacir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -99,15 +99,6 @@ void Channel::add_message(std::string username, std::string message)
 {
 	this->messages[username] = message;
 }
-
-// Client Channel::get_client(std::string name)
-// {
-// 	for (int i = 0; i < this->clients.size() ; i++)
-// 	{
-// 		if(name == this->clients[i].get_nickname())
-// 			return this->clients[i];
-// 	}
-// }
 
 Channel::~Channel()
 {

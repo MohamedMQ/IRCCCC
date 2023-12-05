@@ -3,6 +3,11 @@
 		"*.excalidraw": "json",
 		"*.excalidrawlib": "json",
 		"vector": "cpp",
+<<<<<<< HEAD
+=======
+		"utility": "cpp",
+		"string": "cpp",
+>>>>>>> rida_branch
 		"__bit_reference": "cpp",
 		"__config": "cpp",
 		"__debug": "cpp",
@@ -56,13 +61,20 @@
 		"sstream": "cpp",
 		"stdexcept": "cpp",
 		"streambuf": "cpp",
+<<<<<<< HEAD
 		"string": "cpp",
+=======
+>>>>>>> rida_branch
 		"string_view": "cpp",
 		"system_error": "cpp",
 		"tuple": "cpp",
 		"type_traits": "cpp",
 		"typeinfo": "cpp",
+<<<<<<< HEAD
 		"unordered_map": "cpp",
 		"utility": "cpp"
+=======
+		"unordered_map": "cpp"
+>>>>>>> rida_branch
 	}
 }
