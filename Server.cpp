@@ -79,10 +79,10 @@ public:
 		std::string buffer_temp = buffer;
 		char *str;
 		std::vector<char *> tokens;
-		str = strtok((char *)(buffer.c_str()), " \r");
+		str = strtok((char *)(buffer.c_str()), " ");
 		while (str != NULL) {
 			tokens.push_back(str);
-			str = strtok (NULL, " \r");
+			str = strtok (NULL, " ");
 		}
 		if (!std::strcmp(tokens[0], "USER") && client.get_is_passF())
 			user_command(buffer_temp, client, clientSocket);
@@ -268,27 +268,24 @@ public:
 		std::string temp_command = command;
 		std::vector<std::string> tokens;
 		std::string realname;
+		std::string username;
 		str = strtok((char *)(command.c_str()), " ");
 		while (str != NULL)
 		{
 			tokens.push_back(str);
 			str = strtok(NULL, " ");
 		}
-		if (flag == 5)
-		{
-			client.set_username(client.get_nickname());
-			int pos = temp_command.find(tokens[4]);
-			realname = temp_command.substr(pos);
-			client.set_real_name(realname);
-		}
-		else if (flag == 10)
-		{
-			client.set_username(client.get_nickname());
+		if (flag == 10)
 			client.set_real_name(client.get_nickname());
-		}
 		else
 		{
-			client.set_username(tokens[1]);
+			if (tokens[1].length() > 14)
+				username = tokens[1].substr(0, 14);
+			else if (tokens[1].length() < 1)
+				username = client.get_nickname();
+			else
+				username = tokens[1];
+			client.set_username(username);
 			int pos = temp_command.find(tokens[4]);
 			realname = temp_command.substr(pos);
 			client.set_real_name(realname);
@@ -436,7 +433,6 @@ public:
 
 	//////////////////////////////////////nickname_command//////////////////////////////////////////////////////////////////
 
-
 	void nickname_command(std::string buffer, Client &client, int &clientSocket) {
 		char *str;
 		std::string response;
@@ -454,14 +450,14 @@ public:
 		}
 		else if (!client.get_is_nickF())
 		{
-			str = strtok((char *)(buffer.c_str()), " \r");
+			str = strtok((char *)(buffer.c_str()), " ");
 			while (str != NULL)
 			{
 				tokens.push_back(str);
-				str = strtok(NULL, " \r");
+				str = strtok(NULL, " ");
 			}
 			std::string s(tokens[1]);
-			if (!pars_nickname(s))
+			if (!pars_nickname(s) || s.length() < 1 || s.length() > 14)
 			{
 				response = ":" + this->getServerName() + " 432 " + client.get_nickname() + " :Erroneous Nickname\r\n";
 				bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
@@ -508,7 +504,7 @@ public:
 						return;
 					}
 				}
-				if (!pars_nickname(tokens[1]))
+				if (!pars_nickname(tokens[1]) || tokens[1].length() < 1 || tokens[1].length() > 14)
 				{
 					response = ":" + this->getServerName() + " 432 " + client.get_nickname() + " :Erroneous Nickname\r\n";
 					bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
@@ -524,15 +520,25 @@ public:
 
 	///////////////////////////////////////privmsg_command/////////////////////////////////////////////////////////////////
 
+	int check_if_client_exist(std::string client_name)
+	{
+		std::map<int, Client>::iterator iter;
+		for (iter = _clients.begin(); iter != _clients.end(); iter++)
+		{
+			if ((*iter).second.get_nickname() == client_name)
+				return 1;
+		}
+		return 0;
+	}
+
 	int check_channel_if_exist(std::string channel_name)
 	{
-		int flag = 0;
 		for (int i = 0; i < _channels.size(); i++)
 		{
 			if (_channels[i].get_name() == channel_name)
-				flag = 1337;
+				return 1;
 		}
-		return flag;
+		return 0;
 	}
 
 	void privmsg_command(Client &client, std::string command, int &clientSocket)
@@ -549,7 +555,6 @@ public:
 		std::vector<std::string> tokens;
 		std::map<int, Client>::iterator iter;
 		std::map<int, Client>::iterator iter2;
-
 		str = strtok((char *)(command.c_str()), " ");
 		while (str != NULL)
 		{
@@ -574,11 +579,8 @@ public:
 					flag = 42;
 				else
 				{
-					// response = ":" + this->getServerName() + " 403 " + client.get_nickname() + " " + tokens[1] + " :No such channel\n\r";
-					// bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 					response = ":" + servername + " 403 " + nickname + " " + tokens[1] + " :No such channel\r\n";
 					bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
-					std::cout << "|" << bytes_sent << "|\n";
 					return;
 				}
 			}
@@ -590,7 +592,6 @@ public:
 				{
 					response = ":" + this->getServerName() + " 401 " + client.get_nickname() + " " + tokens[1] + " :No such nick\r\n";
 					bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
-					// std::cout << "no such nickname" << std::endl;
 					return;
 				}
 			}
@@ -616,23 +617,20 @@ public:
 			}
 			else if (flag == 42)
 			{
-				for (int i = 0; i < _channels.size(); i++)
+				if (check_if_client_already_joined(client, tokens[1]))
 				{
-					if (_channels[i].get_name() == tokens[1])
+					for (int i = 0; i < _channels.size(); i++)
 					{
 						int pos = temp_command.find(tokens[2]);
 						message = temp_command.substr(pos);
-						// for (iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
-						// 	if ((*iter2).second.get_nickname() == tokens[1]) {
-						// 		break;
-						// 	}
-						// }
 						response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + this->getServerName() + " PRIVMSG " + tokens[1] + " :" + message + "\r\n";
 						bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 						_channels[i].add_message(client.get_nickname(), message);
 						break;
 					}
 				}
+				else
+					std::cout << "no such channel" << std::endl;
 			}
 		}
 	}
@@ -725,10 +723,10 @@ public:
 		int flag = 0;
 		std::vector<char *> tokens;
 		std::vector<char *> tokens2;
-		str = strtok((char *)(command.c_str() + 5), " \r");
+		str = strtok((char *)(command.c_str() + 5), " ");
 		while (str != NULL) {
 			tokens.push_back(str);
-			str = strtok (NULL, " \r");
+			str = strtok (NULL, " ");
 		}
 		if (tokens.size() >= 1)
 		{
@@ -820,10 +818,10 @@ public:
 		int flag = 0;
 		std::vector<char *> tokens;
 		std::vector<char *> tokens2;
-		str = strtok((char *)(buffer.c_str() + 5), " \r");
+		str = strtok((char *)(buffer.c_str() + 5), " ");
 		while (str != NULL) {
 			tokens.push_back(str);
-			str = strtok (NULL, " \r");
+			str = strtok (NULL, " ");
 		}
 		if (tokens.size() >= 1)
 		{
@@ -894,27 +892,16 @@ public:
 		return 0;
 	}
 
-	int check_if_client_exist(std::string client_name)
-	{
-		std::map<int, Client>::iterator iter;
-		for (iter = _clients.begin(); iter != _clients.end(); iter++)
-		{
-			if ((*iter).second.get_nickname() == client_name)
-				return 1;
-		}
-		return 0;
-	}
-
 	void invite_command(Client &client, std::string buffer)
 	{
 		char *str;
 		std::vector<char *> tokens;
 		std::string temp_buffer = buffer;
-		str = strtok((char *)(buffer.c_str() + 7), " \r");
+		str = strtok((char *)(buffer.c_str() + 7), " ");
 		while (str != NULL)
 		{
 			tokens.push_back(str);
-			str = strtok(NULL, " \r");
+			str = strtok(NULL, " ");
 		}
 		if (tokens.size() >=2)
 		{
@@ -1147,7 +1134,7 @@ public:
 					}
 
 				}
-				else if (!std::strcmp(tokens[1], "-k") || !std::strcmp(tokens[1], "-o"))
+				else if (!std::strcmp(tokens[1], "-k") || !std::strcmp(tokens[1], "-o") || !std::strcmp(tokens[1], "-l"))
 				{
 					if (!std::strcmp(tokens[1], "-k"))
 					{
@@ -1165,7 +1152,6 @@ public:
 						}
 						else
 							std::cerr << "Not enough parameters" << std::endl;
-
 					}
 					else if (!std::strcmp(tokens[1], "-o"))
 					{
@@ -1192,11 +1178,15 @@ public:
 								change_client_mode_o(tokens[2], tokens[0], 0);
 							}
 						}
+						else
+							std::cerr << "Not enough parameters" << std::endl;
 					}
 					else if (!std::strcmp(tokens[1], "-l"))
 					{
-						// if
-						set_channel_mode(tokens[0], 'l', 0);
+						if (tokens.size() >= 2)
+							set_channel_mode(tokens[0], 'l', 0);
+						else
+							std::cerr << "Not enough parameters" << std::endl;
 					}
 				}
 				else if (!std::strcmp(tokens[1], "+i") || !std::strcmp(tokens[1], "+t"))
@@ -1248,11 +1238,11 @@ public:
 		char *str;
 		std::vector<char *> tokens;
 		std::string topic;
-		str = strtok((char *)(command.c_str() + 6), " \r");
+		str = strtok((char *)(command.c_str() + 6), " ");
 		while (str != NULL)
 		{
 			tokens.push_back(str);
-			str = strtok(NULL, " \r");
+			str = strtok(NULL, " ");
 		}
 		if (tokens.size() == 0)
 			std::cout << "syntax errrooor " << std::endl;
@@ -1320,11 +1310,11 @@ public:
 	{
 		char *str;
 		std::vector<char *> tokens;
-		str = strtok((char *)(command.c_str() + 5), " \r");
+		str = strtok((char *)(command.c_str() + 5), " ");
 		while (str != NULL)
 		{
 			tokens.push_back(str);
-			str = strtok(NULL, " \r");
+			str = strtok(NULL, " ");
 		}
 		if (tokens.size() < 2)
 		{
@@ -1381,5 +1371,3 @@ int main(int ac, char **av)
 	server.ServerRun();
 	return (0);
 }
-
-// @ # ! : $ & ? * > <
