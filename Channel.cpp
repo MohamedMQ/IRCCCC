@@ -6,7 +6,7 @@
 /*   By: rennacir <rennacir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/20 15:55:33 by rennacir          #+#    #+#             */
-/*   Updated: 2023/12/05 18:00:15 by rennacir         ###   ########.fr       */
+/*   Updated: 2023/12/06 10:33:39 by rennacir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,11 @@
 Channel::Channel()
 {
 	this->channel_psw = "";
+	this->modes.i = 0;
+	this->modes.k = 0;
+	this->modes.l = 0;
+	this->modes.o = 0;
+	this->modes.t = 0;
 }
 
 int Channel::get_num_of_clients()

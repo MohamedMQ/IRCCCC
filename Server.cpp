@@ -564,12 +564,12 @@ public:
 		if (tokens.size() < 2) {
 			response = ":" + this->getServerName() + " 411 " + client.get_nickname() + " :No recipient given (PRIVMSG)\r\n";
 			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
-			// std::cerr << "Not enough paramters" << std::endl;
+			return;
 		}
 		if (tokens.size() < 3) {
 			response = ":" + this->getServerName() + " 412 " + client.get_nickname() + " :No text to send\r\n";
 			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
-			// std::cerr << "Not enough paramters" << std::endl;
+			return;
 		}
 		else
 		{
@@ -621,16 +621,22 @@ public:
 				{
 					for (int i = 0; i < _channels.size(); i++)
 					{
-						int pos = temp_command.find(tokens[2]);
-						message = temp_command.substr(pos);
-						response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + this->getServerName() + " PRIVMSG " + tokens[1] + " :" + message + "\r\n";
-						bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
-						_channels[i].add_message(client.get_nickname(), message);
-						break;
+						if (_channels[i].get_name() == tokens[1])
+						{
+							int pos = temp_command.find(tokens[2]);
+							message = temp_command.substr(pos);
+							response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + this->getServerName() + " PRIVMSG " + tokens[1] + " :" + message + "\r\n";
+							bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+							_channels[i].add_message(client.get_nickname(), message);
+							break;
+						}
 					}
 				}
 				else
-					std::cout << "no such channel" << std::endl;
+				{
+					response = ":" + servername + " 403 " + nickname + " " + tokens[1] + " :No such channel\r\n";
+					bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+				}
 			}
 		}
 	}
@@ -654,19 +660,6 @@ public:
 				break;
 			}
 		}
-	}
-
-	int check_if_invite_only_channel(std::string token) {
-		for(int i = 0; i < _channels.size(); i++) {
-			if (token == _channels[i].get_name()) {
-				ch_modes ch;
-				ch = _channels[i].get_modes();
-				if(ch.i == 1)
-					return 1;
-				break;
-			}
-		}
-		return 0;
 	}
 
 	int check_if_client_already_joined(Client &client, std::string token) {
@@ -750,7 +743,7 @@ public:
 							i++;
 							continue;
 						}
-						if (check_if_invite_only_channel(tokens2[i]) && !client.get_is_invited(tokens2[i]))
+						if (ch.i == 1 && !client.get_is_invited(tokens2[i]))
 						{
 							i++;
 							std::cout << "Error(473): #chan Cannot join channel (invite only)" << std::endl;
