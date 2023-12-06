@@ -10,7 +10,7 @@ private:
 	int _maxClientsNumber;
 	std::string _serverName;
 	struct pollfd *_pollFds;
-	std::map<long, Client> _clients;
+	std::map<int, Client> _clients;
 	std::vector<Channel> _channels;
 
 public:
@@ -395,7 +395,7 @@ public:
 		char *str;
 		std::string response;
 		int bytes_sent;
-		std::map<long, Client>::iterator ptr;
+		std::map<int, Client>::iterator ptr;
 		std::vector<std::string> tokens;
 
 		if (buffer.find(":") == 5 && !client.get_is_nickF()) {
@@ -485,10 +485,8 @@ public:
 		std::string message;
 		std::string temp_command = command;
 		std::vector<std::string> tokens;
-		std::map<long, Client>::iterator iter;
-		std::map<long, Client>::iterator iter2;
-		// std::map<long, Client>::iterator iter3;
-
+		std::map<int, Client>::iterator iter;
+		std::map<int, Client>::iterator iter2;
 		str = strtok((char *)(command.c_str()), " ");
 		while (str != NULL) {
 			tokens.push_back(str);
@@ -513,7 +511,6 @@ public:
 					// bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 					response = ":" + this->getServerName() + " 403 " + client.get_nickname() + " " + tokens[1] + " :No such channel\r\n";
 					bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
-					std::cout << "|" << bytes_sent << "|\n";
 					return;
 				}
 			} else {
@@ -543,20 +540,28 @@ public:
 					}
 				}
 			} else if (flag == 42) {
-				for (int i = 0; i < _channels.size(); i++) {
-					if (_channels[i].get_name() == tokens[1]) {
-						int pos = temp_command.find(tokens[2]);
-						message = temp_command.substr(pos);
-						for (iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
-							if (check_if_client_already_joined((*iter2).second, tokens[1])
-								&& (*iter2).first != clientSocket) {
-								response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + this->getServerName() + " PRIVMSG " + tokens[1] + " :" + message + "\r\n";
-								bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+				if (check_if_client_already_joined(client, tokens[1]))
+				{
+					for (int i = 0; i < _channels.size(); i++) {
+						if (_channels[i].get_name() == tokens[1]) {
+							int pos = temp_command.find(tokens[2]);
+							message = temp_command.substr(pos);
+							for (iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
+								if (check_if_client_already_joined((*iter2).second, tokens[1])
+									&& (*iter2).first != clientSocket) {
+									response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + this->getServerName() + " PRIVMSG " + tokens[1] + " :" + message + "\r\n";
+									bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+								}
 							}
+							_channels[i].add_message(client.get_nickname(), message);
+							break;
 						}
-						_channels[i].add_message(client.get_nickname(), message);
-						break;
 					}
+				}
+				else
+				{
+					response = ":" + this->getServerName() + " 403 " + client.get_nickname() + " " + tokens[1] + " :No such channel\r\n";
+					bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 				}
 			}
 		}
@@ -765,7 +770,7 @@ public:
 	{
 		int i = 0;
 		int j = 0;
-		std::map<long, Client>::iterator iter;
+		std::map<int, Client>::iterator iter;
 		for (i = 0; i < _channels.size(); i++)
 		{
 			if (_channels[i].get_name() == channel_name)
@@ -808,7 +813,7 @@ public:
 
 	int check_if_client_exist(std::string client_name)
 	{
-		std::map<long, Client>::iterator iter;
+		std::map<int, Client>::iterator iter;
 		for (iter = _clients.begin(); iter != _clients.end(); iter++)
 		{
 			if ((*iter).second.get_nickname() == client_name)
@@ -885,7 +890,7 @@ public:
 
 	int check_new_already_join(std::string token, std::string channel_name)
 	{
-		std::map<long, Client>::iterator iter;
+		std::map<int, Client>::iterator iter;
 		if (check_if_client_exist(token))
 		{
 			for (iter = _clients.begin() ; iter != _clients.end() ; iter++)
@@ -904,7 +909,7 @@ public:
 
 	void change_client_mode_o(std::string client_name, std::string channel_name, int flag)
 	{
-		std::map<long, Client>::iterator iter;
+		std::map<int, Client>::iterator iter;
 		for (iter = _clients.begin() ; iter != _clients.end() ; iter++)
 		{
 			if (client_name == (*iter).second.get_nickname())
@@ -1187,7 +1192,7 @@ public:
 
 	int check_if_kicked_client_joined(std::string client_name, std::string channel_name)
 	{
-		std::map<long, Client>::iterator iter;
+		std::map<int, Client>::iterator iter;
 		for (int i = 0; i < _channels.size(); i++)
 		{
 			if (channel_name == _channels[i].get_name())
@@ -1209,7 +1214,7 @@ public:
 
 	void remove_channel_from_client(std::string client_name, std::string channel_name)
 	{
-		std::map<long, Client>::iterator iter;
+		std::map<int, Client>::iterator iter;
 		for (iter = _clients.begin(); iter != _clients.end(); iter++)
 		{
 			if ((*iter).second.get_nickname() == client_name)
