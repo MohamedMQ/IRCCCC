@@ -6,7 +6,7 @@
 /*   By: mmaqbour <mmaqbour@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/20 15:22:02 by rennacir          #+#    #+#             */
-/*   Updated: 2023/12/02 15:28:03 by mmaqbour         ###   ########.fr       */
+/*   Updated: 2023/12/06 18:09:58 by mmaqbour         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,6 +60,7 @@ class Client
 		std::string get_username();
 		void set_real_name(std::string realname);
 		std::string get_real_name();
+		void print_channels();
 		void set_private_message(std::string username, std::string message);
 };
 

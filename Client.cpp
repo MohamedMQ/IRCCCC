@@ -6,7 +6,7 @@
 /*   By: mmaqbour <mmaqbour@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/20 15:31:12 by rennacir          #+#    #+#             */
-/*   Updated: 2023/12/05 14:11:16 by mmaqbour         ###   ########.fr       */
+/*   Updated: 2023/12/06 18:26:34 by mmaqbour         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -95,6 +95,14 @@ void Client::modify_channel_bool(Channel &channel, bool a)
 int Client::get_channel(Channel &channel)
 {
 	return this->channels[channel.get_name()];
+}
+
+void Client::print_channels()
+{
+		for (std::map<std::string, bool>::iterator iter = this->channels.begin() ; iter != channels.end() ; iter++)
+		{
+			std::cout << this->get_nickname() << " :" <<  (*iter).first << std::endl;
+		}
 }
 
 int Client::if_element_exist(Channel &channel)
