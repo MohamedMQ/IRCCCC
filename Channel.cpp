@@ -6,7 +6,7 @@
 /*   By: rennacir <rennacir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/20 15:55:33 by rennacir          #+#    #+#             */
-/*   Updated: 2023/12/06 10:33:39 by rennacir         ###   ########.fr       */
+/*   Updated: 2023/12/06 11:38:14 by rennacir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -102,33 +102,7 @@ void Channel::set_mode(char mode, int flag)
 
 void Channel::add_message(std::string username, std::string message)
 {
-	int flag = 0;
-	for (int i = 0; i < this->channel_private_messages.size() ; i++)
-	{
-		if (this->channel_private_messages[i].user == username)
-		{
-			flag = 1337;
-			break;
-		}
-	}
-	if (flag == 1337)
-	{
-		for (int i = 0; i < this->channel_private_messages.size() ; i++)
-		{
-			if (this->channel_private_messages[i].user == username)
-			{
-				this->channel_private_messages[i].messages.push_back(message);
-				break;
-			}
-		}
-	}
-	else
-	{
-		privmsg prv;
-		prv.user = username;
-		prv.messages.push_back(message);
-		this->channel_private_messages.push_back(prv);
-	}
+	this->messages.insert(std::make_pair(username, message));
 }
 
 Channel::~Channel()

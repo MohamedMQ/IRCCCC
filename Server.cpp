@@ -1,7 +1,6 @@
 #include "irc.hpp"
 
-class Server
-{
+class Server {
 private:
 	std::map<int, std::string> _saveSemiCommands;
 	std::string _command;
@@ -11,12 +10,11 @@ private:
 	int _maxClientsNumber;
 	std::string _serverName;
 	struct pollfd *_pollFds;
-	std::map<int, Client> _clients;
+	std::map<long, Client> _clients;
 	std::vector<Channel> _channels;
 
 public:
-	Server(std::string password, int port)
-	{
+	Server(std::string password, int port) {
 		_password = password;
 		_portNumber = port;
 		_maxClientsNumber = 50;
@@ -24,41 +22,34 @@ public:
 		_pollFds = new struct pollfd[_maxClientsNumber];
 	}
 
-	int getMaxClientsNumber()
-	{
+	int getMaxClientsNumber() {
 		return _maxClientsNumber;
 	}
 
-	void setPass(std::string pass)
-	{
+	void setPass(std::string pass) {
 		_password = pass;
 	}
 
-	void setPort(int port)
-	{
+	void setPort(int port) {
 		_portNumber = port;
 	}
 
-	void setServerSock(int socket)
-	{
+	void setServerSock(int socket) {
 		_serverSock = socket;
 	}
 
-	std::string getServerName()
-	{
+	std::string getServerName() {
 		return _serverName;
 	}
 
-	int requiredParams(Client &client)
-	{
+	int requiredParams(Client &client) {
 		if (client.get_is_userF() && client.get_is_nickF() && client.get_is_passF())
 			return (1);
 		else
 			return (0);
 	}
 
-	void params_requirements(Client &client, int &clientSocket)
-	{
+	void params_requirements(Client &client, int &clientSocket) {
 		std::string response;
 		int bytes_read;
 
@@ -74,15 +65,14 @@ public:
 		}
 	}
 
-	void executeAll(Client &client, std::string buffer, int &clientSocket, std::string _password)
-	{
+	void executeAll(Client &client, std::string buffer, int &clientSocket, std::string _password) {
 		std::string buffer_temp = buffer;
 		char *str;
 		std::vector<char *> tokens;
-		str = strtok((char *)(buffer.c_str()), " ");
+		str = strtok((char *)(buffer.c_str()), " \r");
 		while (str != NULL) {
 			tokens.push_back(str);
-			str = strtok (NULL, " ");
+			str = strtok (NULL, " \r");
 		}
 		if (!std::strcmp(tokens[0], "USER") && client.get_is_passF())
 			user_command(buffer_temp, client, clientSocket);
@@ -90,12 +80,10 @@ public:
 			nickname_command(buffer_temp, client, clientSocket);
 		else if (!std::strcmp(tokens[0], "PASS"))
 			pass_command(client, buffer_temp, clientSocket);
-		else if (!std::strcmp(tokens[0], "QUIT") && client.get_is_passF())
-		{
+		else if (!std::strcmp(tokens[0], "QUIT") && client.get_is_passF()) {
 			if (quit_command(clientSocket, buffer_temp) == -1)
 				return;
-		}
-		else if (!std::strcmp(tokens[0], "PRIVMSG") && requiredParams(client))
+		} else if (!std::strcmp(tokens[0], "PRIVMSG") && requiredParams(client))
 			privmsg_command(client, buffer_temp, clientSocket);
 		else if (!std::strcmp(tokens[0], "JOIN") && requiredParams(client))
 			join_command(client, buffer_temp);
@@ -117,12 +105,10 @@ public:
 		}
 	}
 
-	int CreateSocketConnection()
-	{
+	int CreateSocketConnection() {
 		int yes = 1;
 		int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-		if (sockfd < 0)
-		{
+		if (sockfd < 0) {
 			std::cout << "Error/ninitializing the socket\n";
 			return -1;
 		}
@@ -132,8 +118,7 @@ public:
 		serverAddress.sin_port = htons(_portNumber);
 		serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
 		setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
-		if (bind(sockfd, (sockaddr *)&serverAddress, sizeof(serverAddress)) == -1)
-		{
+		if (bind(sockfd, (sockaddr *)&serverAddress, sizeof(serverAddress)) == -1) {
 			std::cout << "Error/nbinding with the socket failed\n";
 			close(sockfd);
 			return -1;
@@ -141,35 +126,28 @@ public:
 		return sockfd;
 	}
 
-	void initClient()
-	{
-		for (int i = 1; i < _maxClientsNumber; i++)
-		{
+	void initClient() {
+		for (int i = 1; i < _maxClientsNumber; i++) {
 			_pollFds[i].fd = 0;
 			_pollFds[i].events = POLLIN;
 			_pollFds[i].revents = 0;
 		}
 	}
 
-	int indexClient()
-	{
+	int indexClient() {
 		int i;
-		for (i = 1; i < _maxClientsNumber; i++)
-		{
+		for (i = 1; i < _maxClientsNumber; i++) {
 			if (_pollFds[i].fd == -1)
 				return i;
 		}
-
-		for (i = 1; i < _maxClientsNumber; i++)
-		{
+		for (i = 1; i < _maxClientsNumber; i++) {
 			if (_pollFds[i].fd == 0)
 				break;
 		}
 		return i;
 	}
 
-	void ServerRun()
-	{
+	void ServerRun() {
 		initClient();
 		std::cout << "Server is running\n";
 		int flag = fcntl(_serverSock, F_GETFL, 0);
@@ -182,19 +160,15 @@ public:
 		int response = 0;
 		int i = 1;
 
-		while (1)
-		{
+		while (1) {
 			response = poll(_pollFds, _maxClientsNumber, -1);
-			if (response == -1)
-			{
+			if (response == -1) {
 				std::cout << "Error\npoll failed\n";
 				return;
 			}
-			if (_pollFds[0].revents && POLLIN)
-			{
+			if (_pollFds[0].revents && POLLIN) {
 				int clientSocket = accept(_serverSock, NULL, NULL);
-				if (clientSocket < 0)
-				{
+				if (clientSocket < 0) {
 					std::cout << "Error\naccepting the client socket failed\n";
 					if (errno == EAGAIN || errno == EWOULDBLOCK)
 						continue;
@@ -208,44 +182,35 @@ public:
 				_pollFds[i].revents = 0;
 				_clients.insert(std::make_pair(_pollFds[i].fd, Client()));
 			}
-			for (long unsigned int j = 1; j <= _clients.size(); j++)
-			{
+			for (long unsigned int j = 1; j <= _clients.size(); j++) {
 				if (_pollFds[j].fd == -1)
 					continue;
-				if (_pollFds[j].revents & POLLIN)
-				{
+				if (_pollFds[j].revents & POLLIN) {
 					char buffer[1024];
 					memset(buffer, 0, sizeof(buffer));
 					response = recv(_pollFds[j].fd, buffer, sizeof(buffer), 0);
-					if (response == -1)
-					{
+					if (response == -1) {
 						std::cout << "Socket fd: " << _pollFds[j].fd << " J is " << j << std::endl;
 						std::cout << "Error\nrecv failed: " << response << std::endl;
 						if (errno == EAGAIN || errno == EWOULDBLOCK)
 							continue;
 						else
 							return;
-					}
-					else if (response == 0)
-					{
+					} else if (response == 0) {
 						std::cout << "Client " << _pollFds[j].fd << " disconnected from the server\n";
 						_saveSemiCommands.erase(_pollFds[j].fd);
 						_clients.erase(_pollFds[j].fd);
 						close(_pollFds[j].fd);
 						_pollFds[j].fd = -1;
 						continue;
-					}
-					else
-					{
+					} else {
 						std::string receivedData(buffer, response);
 						std::string &partialCommand = _saveSemiCommands[_pollFds[j].fd];
 						partialCommand += receivedData;
 
-						if (!partialCommand.empty())
-						{
+						if (!partialCommand.empty()) {
 							size_t newlinePos = partialCommand.find('\n');
-							while (newlinePos != std::string::npos)
-							{
+							while (newlinePos != std::string::npos) {
 								_command = partialCommand.substr(0, newlinePos);
 								std::cout << _command << std::endl;
 								if (_command.find('\r') != std::string::npos)
@@ -262,30 +227,26 @@ public:
 		}
 	}
 
-	void fill_client(std::string command, Client &client, int flag)
-	{
+	void fill_client(std::string command, Client &client, int flag) {
 		char *str;
 		std::string temp_command = command;
 		std::vector<std::string> tokens;
 		std::string realname;
-		std::string username;
 		str = strtok((char *)(command.c_str()), " ");
-		while (str != NULL)
-		{
+		while (str != NULL) {
 			tokens.push_back(str);
 			str = strtok(NULL, " ");
 		}
-		if (flag == 10)
+		if (flag == 5) {
+			client.set_username(client.get_nickname());
+			int pos = temp_command.find(tokens[4]);
+			realname = temp_command.substr(pos);
+			client.set_real_name(realname);
+		} else if (flag == 10) {
+			client.set_username(client.get_nickname());
 			client.set_real_name(client.get_nickname());
-		else
-		{
-			if (tokens[1].length() > 14)
-				username = tokens[1].substr(0, 14);
-			else if (tokens[1].length() < 1)
-				username = client.get_nickname();
-			else
-				username = tokens[1];
-			client.set_username(username);
+		} else {
+			client.set_username(tokens[1]);
 			int pos = temp_command.find(tokens[4]);
 			realname = temp_command.substr(pos);
 			client.set_real_name(realname);
@@ -300,8 +261,7 @@ public:
 			|| nickname[i] == '_') {
 			return 0;
 		}
-		for (int i = 0; i < nickname.size(); i++)
-		{
+		for (int i = 0; i < nickname.size(); i++) {
 			if ((nickname[i] >= 'a' && nickname[i] <= 'z')
 				|| (nickname[i] >= 'A' && nickname[i] <= 'Z')
 				|| (nickname[i] >= '1' && nickname[i] <= '9')
@@ -316,22 +276,22 @@ public:
 		return 1;
 	}
 
-	int pars_user_command(std::string command, int &flag, Client &client, int &clientSocket)
-	{
+	int pars_user_command(std::string command, int &flag, Client &client, int &clientSocket) {
 		std::string response;
+		std::string real_name;
 		int bytes_sent;
+		int pos;
+		int i;
 
 		std::vector<std::string> tokens;
 		char *str;
 		std::string temp_command = command;
 		str = strtok((char *)(command.c_str()), " ");
-		while (str != NULL)
-		{
+		while (str != NULL) {
 			tokens.push_back(str);
 			str = strtok(NULL, " ");
 		}
-		if (tokens.size() < 5)
-		{
+		if (tokens.size() < 5) {
 			response = ":" + this->getServerName() + " 461 " + client.get_nickname() + " USER :Not enough parameters\r\n";
 			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 			return 0;
@@ -346,18 +306,15 @@ public:
 			clientSocket = -1;
 			return 0;
 		}
-		int pos = temp_command.find(tokens[4]);
-		std::string real_name = temp_command.substr(pos);
-		if (real_name == ":")
-		{
+		pos = temp_command.find(tokens[4]);
+		real_name = temp_command.substr(pos);
+		if (real_name == ":") {
 			flag = 10;
 			return 1;
 		}
-		int i = 4;
-		while (i < tokens.size())
-		{
-			if (!pars_nickname(tokens[4]))
-			{
+		i = 4;
+		while (i < tokens.size()) {
+			if (!pars_nickname(tokens[4])) {
 				flag = 10;
 				break;
 			}
@@ -433,32 +390,29 @@ public:
 
 	//////////////////////////////////////nickname_command//////////////////////////////////////////////////////////////////
 
+
 	void nickname_command(std::string buffer, Client &client, int &clientSocket) {
 		char *str;
 		std::string response;
 		int bytes_sent;
-		std::map<int, Client>::iterator ptr;
+		std::map<long, Client>::iterator ptr;
 		std::vector<std::string> tokens;
 
-		if (buffer.find(":") == 5 && !client.get_is_nickF())
-		{
+		if (buffer.find(":") == 5 && !client.get_is_nickF()) {
 			response = ":" + this->getServerName() + " 432 " + "*" + " :Erroneous Nickname\r\n";
 			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 			close(clientSocket);
 			_clients.erase(clientSocket);
 			clientSocket = -1;
-		}
-		else if (!client.get_is_nickF())
+		} else if (!client.get_is_nickF())
 		{
-			str = strtok((char *)(buffer.c_str()), " ");
-			while (str != NULL)
-			{
+			str = strtok((char *)(buffer.c_str()), " \r");
+			while (str != NULL) {
 				tokens.push_back(str);
-				str = strtok(NULL, " ");
+				str = strtok(NULL, " \r");
 			}
 			std::string s(tokens[1]);
-			if (!pars_nickname(s) || s.length() < 1 || s.length() > 14)
-			{
+			if (!pars_nickname(s)) {
 				response = ":" + this->getServerName() + " 432 " + client.get_nickname() + " :Erroneous Nickname\r\n";
 				bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 				close(clientSocket);
@@ -478,34 +432,27 @@ public:
 			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 			client.set_nickname(s);
 			client.set_is_nickF(1);
-		}
-		else
-		{
+		} else {
 			str = strtok((char *)(buffer.c_str()), " ");
-			while (str != NULL)
-			{
+			while (str != NULL) {
 				tokens.push_back(str);
 				str = strtok(NULL, " ");
 			}
-			if (tokens.size() >= 2)
-			{
+			if (tokens.size() >= 2) {
 				if (!std::strcmp(tokens[1].c_str(), ":")) {
 					std::cout << "HERE [" << tokens[1] << "] NOW\n";
 					response = ":" + this->getServerName() + " 431 " + client.get_nickname() + " :No nickname given\r\n";
 					bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 					return;
 				}
-				for (ptr = _clients.begin(); ptr != _clients.end(); ptr++)
-				{
-					if ((*ptr).second.get_nickname() == tokens[1])
-					{
+				for (ptr = _clients.begin(); ptr != _clients.end(); ptr++) {
+					if ((*ptr).second.get_nickname() == tokens[1]) {
 						response = ":" + this->getServerName() + " 433 " + client.get_nickname() + " " + tokens[1] + " :Nickname is already in use\r\n";
 						bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 						return;
 					}
 				}
-				if (!pars_nickname(tokens[1]) || tokens[1].length() < 1 || tokens[1].length() > 14)
-				{
+				if (!pars_nickname(tokens[1])) {
 					response = ":" + this->getServerName() + " 432 " + client.get_nickname() + " :Erroneous Nickname\r\n";
 					bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 					return;
@@ -520,44 +467,30 @@ public:
 
 	///////////////////////////////////////privmsg_command/////////////////////////////////////////////////////////////////
 
-	int check_if_client_exist(std::string client_name)
-	{
-		std::map<int, Client>::iterator iter;
-		for (iter = _clients.begin(); iter != _clients.end(); iter++)
-		{
-			if ((*iter).second.get_nickname() == client_name)
-				return 1;
-		}
-		return 0;
-	}
-
-	int check_channel_if_exist(std::string channel_name)
-	{
-		for (int i = 0; i < _channels.size(); i++)
-		{
+	int check_channel_if_exist(std::string channel_name) {
+		int flag = 0;
+		for (int i = 0; i < _channels.size(); i++) {
 			if (_channels[i].get_name() == channel_name)
-				return 1;
+				flag = 1337;
 		}
-		return 0;
+		return flag;
 	}
 
 	void privmsg_command(Client &client, std::string command, int &clientSocket)
 	{
 		char *str;
 		int flag = 0;
-		int j = 2;
 		std::string response;
-		static std::string nickname = client.get_nickname();
-		static std::string servername = this->_serverName;
 		int bytes_sent;
 		std::string message;
 		std::string temp_command = command;
 		std::vector<std::string> tokens;
-		std::map<int, Client>::iterator iter;
-		std::map<int, Client>::iterator iter2;
+		std::map<long, Client>::iterator iter;
+		std::map<long, Client>::iterator iter2;
+		// std::map<long, Client>::iterator iter3;
+
 		str = strtok((char *)(command.c_str()), " ");
-		while (str != NULL)
-		{
+		while (str != NULL) {
 			tokens.push_back(str);
 			str = strtok(NULL, " ");
 		}
@@ -570,37 +503,32 @@ public:
 			response = ":" + this->getServerName() + " 412 " + client.get_nickname() + " :No text to send\r\n";
 			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 			return;
-		}
-		else
-		{
-			if (tokens[1][0] == '#')
-			{
+			// std::cerr << "Not enough paramters" << std::endl;
+		} else {
+			if (tokens[1][0] == '#') {
 				if (check_channel_if_exist(tokens[1]))
 					flag = 42;
-				else
-				{
-					response = ":" + servername + " 403 " + nickname + " " + tokens[1] + " :No such channel\r\n";
+				else {
+					// response = ":" + this->getServerName() + " 403 " + client.get_nickname() + " " + tokens[1] + " :No such channel\n\r";
+					// bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+					response = ":" + this->getServerName() + " 403 " + client.get_nickname() + " " + tokens[1] + " :No such channel\r\n";
 					bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+					std::cout << "|" << bytes_sent << "|\n";
 					return;
 				}
-			}
-			else
-			{
+			} else {
 				if (check_if_client_exist(tokens[1]))
 					flag = 1337;
-				else
-				{
+				else {
 					response = ":" + this->getServerName() + " 401 " + client.get_nickname() + " " + tokens[1] + " :No such nick\r\n";
 					bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+					// std::cout << "no such nickname" << std::endl;
 					return;
 				}
 			}
-			if (flag == 1337)
-			{
-				for (iter = _clients.begin(); iter != _clients.end(); iter++)
-				{
-					if ((*iter).second.get_nickname() == tokens[1])
-					{
+			if (flag == 1337) {
+				for (iter = _clients.begin(); iter != _clients.end(); iter++) {
+					if ((*iter).second.get_nickname() == tokens[1]) {
 						int pos = temp_command.find(tokens[2]);
 						message = temp_command.substr(pos);
 						for (iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
@@ -614,28 +542,21 @@ public:
 						break;
 					}
 				}
-			}
-			else if (flag == 42)
-			{
-				if (check_if_client_already_joined(client, tokens[1]))
-				{
-					for (int i = 0; i < _channels.size(); i++)
-					{
-						if (_channels[i].get_name() == tokens[1])
-						{
-							int pos = temp_command.find(tokens[2]);
-							message = temp_command.substr(pos);
-							response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + this->getServerName() + " PRIVMSG " + tokens[1] + " :" + message + "\r\n";
-							bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
-							_channels[i].add_message(client.get_nickname(), message);
-							break;
+			} else if (flag == 42) {
+				for (int i = 0; i < _channels.size(); i++) {
+					if (_channels[i].get_name() == tokens[1]) {
+						int pos = temp_command.find(tokens[2]);
+						message = temp_command.substr(pos);
+						for (iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
+							if (check_if_client_already_joined((*iter2).second, tokens[1])
+								&& (*iter2).first != clientSocket) {
+								response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + this->getServerName() + " PRIVMSG " + tokens[1] + " :" + message + "\r\n";
+								bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+							}
 						}
+						_channels[i].add_message(client.get_nickname(), message);
+						break;
 					}
-				}
-				else
-				{
-					response = ":" + servername + " 403 " + nickname + " " + tokens[1] + " :No such channel\r\n";
-					bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 				}
 			}
 		}
@@ -716,10 +637,10 @@ public:
 		int flag = 0;
 		std::vector<char *> tokens;
 		std::vector<char *> tokens2;
-		str = strtok((char *)(command.c_str() + 5), " ");
+		str = strtok((char *)(command.c_str() + 5), " \r");
 		while (str != NULL) {
 			tokens.push_back(str);
-			str = strtok (NULL, " ");
+			str = strtok (NULL, " \r");
 		}
 		if (tokens.size() >= 1)
 		{
@@ -811,10 +732,10 @@ public:
 		int flag = 0;
 		std::vector<char *> tokens;
 		std::vector<char *> tokens2;
-		str = strtok((char *)(buffer.c_str() + 5), " ");
+		str = strtok((char *)(buffer.c_str() + 5), " \r");
 		while (str != NULL) {
 			tokens.push_back(str);
-			str = strtok (NULL, " ");
+			str = strtok (NULL, " \r");
 		}
 		if (tokens.size() >= 1)
 		{
@@ -844,7 +765,7 @@ public:
 	{
 		int i = 0;
 		int j = 0;
-		std::map<int, Client>::iterator iter;
+		std::map<long, Client>::iterator iter;
 		for (i = 0; i < _channels.size(); i++)
 		{
 			if (_channels[i].get_name() == channel_name)
@@ -885,16 +806,27 @@ public:
 		return 0;
 	}
 
+	int check_if_client_exist(std::string client_name)
+	{
+		std::map<long, Client>::iterator iter;
+		for (iter = _clients.begin(); iter != _clients.end(); iter++)
+		{
+			if ((*iter).second.get_nickname() == client_name)
+				return 1;
+		}
+		return 0;
+	}
+
 	void invite_command(Client &client, std::string buffer)
 	{
 		char *str;
 		std::vector<char *> tokens;
 		std::string temp_buffer = buffer;
-		str = strtok((char *)(buffer.c_str() + 7), " ");
+		str = strtok((char *)(buffer.c_str() + 7), " \r");
 		while (str != NULL)
 		{
 			tokens.push_back(str);
-			str = strtok(NULL, " ");
+			str = strtok(NULL, " \r");
 		}
 		if (tokens.size() >=2)
 		{
@@ -953,7 +885,7 @@ public:
 
 	int check_new_already_join(std::string token, std::string channel_name)
 	{
-		std::map<int, Client>::iterator iter;
+		std::map<long, Client>::iterator iter;
 		if (check_if_client_exist(token))
 		{
 			for (iter = _clients.begin() ; iter != _clients.end() ; iter++)
@@ -972,7 +904,7 @@ public:
 
 	void change_client_mode_o(std::string client_name, std::string channel_name, int flag)
 	{
-		std::map<int, Client>::iterator iter;
+		std::map<long, Client>::iterator iter;
 		for (iter = _clients.begin() ; iter != _clients.end() ; iter++)
 		{
 			if (client_name == (*iter).second.get_nickname())
@@ -1127,7 +1059,7 @@ public:
 					}
 
 				}
-				else if (!std::strcmp(tokens[1], "-k") || !std::strcmp(tokens[1], "-o") || !std::strcmp(tokens[1], "-l"))
+				else if (!std::strcmp(tokens[1], "-k") || !std::strcmp(tokens[1], "-o"))
 				{
 					if (!std::strcmp(tokens[1], "-k"))
 					{
@@ -1145,6 +1077,7 @@ public:
 						}
 						else
 							std::cerr << "Not enough parameters" << std::endl;
+
 					}
 					else if (!std::strcmp(tokens[1], "-o"))
 					{
@@ -1171,15 +1104,11 @@ public:
 								change_client_mode_o(tokens[2], tokens[0], 0);
 							}
 						}
-						else
-							std::cerr << "Not enough parameters" << std::endl;
 					}
 					else if (!std::strcmp(tokens[1], "-l"))
 					{
-						if (tokens.size() >= 2)
-							set_channel_mode(tokens[0], 'l', 0);
-						else
-							std::cerr << "Not enough parameters" << std::endl;
+						// if
+						set_channel_mode(tokens[0], 'l', 0);
 					}
 				}
 				else if (!std::strcmp(tokens[1], "+i") || !std::strcmp(tokens[1], "+t"))
@@ -1231,11 +1160,11 @@ public:
 		char *str;
 		std::vector<char *> tokens;
 		std::string topic;
-		str = strtok((char *)(command.c_str() + 6), " ");
+		str = strtok((char *)(command.c_str() + 6), " \r");
 		while (str != NULL)
 		{
 			tokens.push_back(str);
-			str = strtok(NULL, " ");
+			str = strtok(NULL, " \r");
 		}
 		if (tokens.size() == 0)
 			std::cout << "syntax errrooor " << std::endl;
@@ -1258,7 +1187,7 @@ public:
 
 	int check_if_kicked_client_joined(std::string client_name, std::string channel_name)
 	{
-		std::map<int, Client>::iterator iter;
+		std::map<long, Client>::iterator iter;
 		for (int i = 0; i < _channels.size(); i++)
 		{
 			if (channel_name == _channels[i].get_name())
@@ -1280,7 +1209,7 @@ public:
 
 	void remove_channel_from_client(std::string client_name, std::string channel_name)
 	{
-		std::map<int, Client>::iterator iter;
+		std::map<long, Client>::iterator iter;
 		for (iter = _clients.begin(); iter != _clients.end(); iter++)
 		{
 			if ((*iter).second.get_nickname() == client_name)
@@ -1303,11 +1232,11 @@ public:
 	{
 		char *str;
 		std::vector<char *> tokens;
-		str = strtok((char *)(command.c_str() + 5), " ");
+		str = strtok((char *)(command.c_str() + 5), " \r");
 		while (str != NULL)
 		{
 			tokens.push_back(str);
-			str = strtok(NULL, " ");
+			str = strtok(NULL, " \r");
 		}
 		if (tokens.size() < 2)
 		{
@@ -1364,3 +1293,5 @@ int main(int ac, char **av)
 	server.ServerRun();
 	return (0);
 }
+
+// @ # ! : $ & ? * > <
