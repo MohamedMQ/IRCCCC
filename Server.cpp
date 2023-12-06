@@ -737,7 +737,7 @@ public:
 		int flag = 0;
 		std::vector<char *> tokens;
 		std::vector<char *> tokens2;
-		str = strtok((char *)(buffer.c_str() + 5), " \r");
+		str = strtok((char *)(buffer.c_str() + 5), " ");
 		while (str != NULL) {
 			tokens.push_back(str);
 			str = strtok (NULL, " \r");
@@ -1300,3 +1300,8 @@ int main(int ac, char **av)
 }
 
 // @ # ! : $ & ? * > <
+//join channel
+//join multiple channels
+//join an invite only channel
+//join an passworded channel
+//join limit channel
