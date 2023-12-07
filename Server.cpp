@@ -367,7 +367,6 @@ public:
 				close(socket);
 				_clients.erase(socket);
 				socket = -1;
-				// std::cout << "Client " << socket << " disconnected from the server\n";
 				return;
 			}
 		}
@@ -379,7 +378,6 @@ public:
 	{
 		if (!std::strcmp((command.substr(0, 4)).c_str(), "QUIT"))
 		{
-			// std::cout << "Client disconnected 2" << std::endl;
 			close(socket);
 			_clients.erase(socket);
 			socket = -1;
@@ -501,14 +499,11 @@ public:
 			response = ":" + this->getServerName() + " 412 " + client.get_nickname() + " :No text to send\r\n";
 			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 			return;
-			// std::cerr << "Not enough paramters" << std::endl;
 		} else {
 			if (tokens[1][0] == '#') {
 				if (check_channel_if_exist(tokens[1]))
 					flag = 42;
 				else {
-					// response = ":" + this->getServerName() + " 403 " + client.get_nickname() + " " + tokens[1] + " :No such channel\n\r";
-					// bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 					response = ":" + this->getServerName() + " 403 " + client.get_nickname() + " " + tokens[1] + " :No such channel\r\n";
 					bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 					return;
@@ -519,7 +514,6 @@ public:
 				else {
 					response = ":" + this->getServerName() + " 401 " + client.get_nickname() + " " + tokens[1] + " :No such nick\r\n";
 					bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
-					// std::cout << "no such nickname" << std::endl;
 					return;
 				}
 			}
@@ -731,7 +725,6 @@ public:
 				i++;
 			}
 		} else {
-			// :server 461 * JOIN :Not enough parameters;
 			response = ":" + this->getServerName() + " 461 " + client.get_nickname() + " JOIN : Not enough parameters\r\n";
 			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 		}
