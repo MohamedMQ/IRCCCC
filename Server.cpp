@@ -715,6 +715,8 @@ public:
 			if (token == _channels[i].get_name()) {
 				client.leave_channel(_channels[i]);
 				_channels[i].remove_client(client);
+				if (_channels[i].get_num_of_clients() == 0)
+					_channels.erase(_channels.begin() + i);
 				break;
 			}
 		}
@@ -744,11 +746,11 @@ public:
 		}
 		if (tokens.size() >= 1)
 		{
-			str2 = strtok(tokens[0], ",\r");
+			str2 = strtok(tokens[0], ",");
 			while (str2 != NULL)
 			{
 				tokens2.push_back(str2);
-				str2 = strtok (NULL, ",\r");
+				str2 = strtok (NULL, ",");
 			}
 			while (i < tokens2.size()) {
 				if (tokens2[i][0] == '#') {
@@ -1022,12 +1024,12 @@ public:
 					{
 						if (tokens.size() >= 3)
 						{
-							std::string s(tokens[2]);
-							if (s.find("\r") != std::string::npos)
-								password = s.substr(0, s.size() - 1);
-							else
-								password = s;
-							set_channel_psw_and_mode(tokens[0], password, 1);
+							// std::string s(tokens[2]);
+							// if (s.find("\r") != std::string::npos)
+							// 	password = s.substr(0, s.size() - 1);
+							// else
+							// 	password = s;
+							set_channel_psw_and_mode(tokens[0], tokens[2], 1);
 						}
 						else
 							std::cerr << "Not enough parameters" << std::endl;
@@ -1112,23 +1114,29 @@ public:
 					}
 					else if (!std::strcmp(tokens[1], "-l"))
 					{
-						// if
-						set_channel_mode(tokens[0], 'l', 0);
+						if (tokens.size() >= 2)
+							set_channel_mode(tokens[0], 'l', 0);
 					}
 				}
 				else if (!std::strcmp(tokens[1], "+i") || !std::strcmp(tokens[1], "+t"))
 				{
-					if (!std::strcmp(tokens[1], "+i"))
-						set_channel_mode(tokens[0], 'i', 1);
-					else if (!std::strcmp(tokens[1], "+t"))
-						set_channel_mode(tokens[0], 't', 1);
+					if (tokens.size() >= 2)
+					{
+						if (!std::strcmp(tokens[1], "+i"))
+							set_channel_mode(tokens[0], 'i', 1);
+						else if (!std::strcmp(tokens[1], "+t"))
+							set_channel_mode(tokens[0], 't', 1);
+					}
 				}
 				else if (!std::strcmp(tokens[1], "-i") || !std::strcmp(tokens[1], "-t"))
 				{
-					if (!std::strcmp(tokens[1], "-i"))
-						set_channel_mode(tokens[0], 'i', 0);
-					else if (!std::strcmp(tokens[1], "-t"))
-						set_channel_mode(tokens[0], 't', 0);
+					if (tokens.size() >= 2)
+					{
+						if (!std::strcmp(tokens[1], "-i"))
+							set_channel_mode(tokens[0], 'i', 0);
+						else if (!std::strcmp(tokens[1], "-t"))
+							set_channel_mode(tokens[0], 't', 0);
+					}
 				}
 			}
 			print_modes(tokens[0]);
