@@ -1148,7 +1148,7 @@ public:
 				arguments = get_arguments(tokens);
 				for (int p = 0; p < options.size() ; p++)
 				{
-					if ( !std::strcmp(options[p].c_str(), "+k") || !std::strcmp(options[p].c_str(), "+o") || !std::strcmp(options[p].c_str(), "+l"))
+					if (!std::strcmp(options[p].c_str(), "+k") || !std::strcmp(options[p].c_str(), "+o") || !std::strcmp(options[p].c_str(), "+l"))
 					{
 						if (!std::strcmp(options[p].c_str(), "+k"))
 						{
@@ -1156,107 +1156,92 @@ public:
 							{
 								response = ":" + this->getServerName() + " 467 " + client.get_nickname() + " " +tokens[0] + " :Channel key already set\r\n";
 								bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
-								return;
-							}
-							if (tokens.size() >= 3) {
-								if (args_count >= arguments.size())
-								{
-									std::cout << "not enough parameters" << std::endl;
-									continue;
-								}
-								set_channel_psw_and_mode(tokens[0], arguments[args_count], 1);
-								std::cout << "mode k setted" << std::endl;
-								for (std::map<int, Client>::iterator iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
-									if (check_if_client_already_joined((*iter2).second, tokens[0])) {
-										response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + this->getServerName() + " MODE " + tokens[0] + " +k " + arguments[args_count] + "\r\n";
-										bytes_sent = send((*iter2).first, response.c_str(), response.size(), 0);
-									}
-								}
 								args_count++;
+								continue;
 							}
-							else
+							if (args_count >= arguments.size())
 							{
 								response = ":" + this->getServerName() + " 461 " + client.get_nickname() + " MODE :Not enough parameters\r\n";
 								bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+								continue;
 							}
+							set_channel_psw_and_mode(tokens[0], arguments[args_count], 1);
+							for (std::map<int, Client>::iterator iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
+								if (check_if_client_already_joined((*iter2).second, tokens[0])) {
+									response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + this->getServerName() + " MODE " + tokens[0] + " +k " + arguments[args_count] + "\r\n";
+									bytes_sent = send((*iter2).first, response.c_str(), response.size(), 0);
+								}
+							}
+							args_count++;
 						}
 						else if (!std::strcmp(options[p].c_str(), "+o"))
 						{
-							if (tokens.size() >= 3)
-							{
-								if (!check_if_client_exist(arguments[args_count]))
-								{
-									response = ":" + this->getServerName() + " 401 " + client.get_nickname() + " " + tokens[3] + " :No such nick\r\n";
-									bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
-									return ;
-								}
-								if (!check_new_already_join(arguments[args_count], tokens[0])) {
-									response = ":" + this->getServerName() + " 441 " + client.get_nickname() + " " + tokens[0] + " :He is not on that channel\r\n";
-									bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
-									return ;
-								}
-								if (check_if_client_exist(arguments[args_count]) && check_new_already_join(arguments[args_count], tokens[0]))
-								{
-									if (!check_if_name_client_is_op(arguments[args_count], tokens[0])) {
-										if (args_count >= arguments.size())
-										{
-											std::cout << "not enough parameters" << std::endl;
-											continue;
-										}
-										change_client_mode_o(arguments[args_count], tokens[0], 1);
-										std::cout << "mode o setted" << std::endl;
-										for (std::map<int, Client>::iterator iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
-											if (check_if_client_already_joined((*iter2).second, tokens[0])) {
-												response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + this->getServerName() + " MODE " + tokens[0] + " +o " + arguments[args_count] + "\r\n";
-												bytes_sent = send((*iter2).first, response.c_str(), response.size(), 0);
-											}
-										}
-										args_count++;
-									}
-									else
-										return;
-								}
-							}
-							else
+							if (args_count >= arguments.size())
 							{
 								response = ":" + this->getServerName() + " 461 " + client.get_nickname() + " MODE :Not enough parameters\r\n";
 								bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+								continue;
+							}
+							if (!check_if_client_exist(arguments[args_count]))
+							{
+								response = ":" + this->getServerName() + " 401 " + client.get_nickname() + " " + tokens[3] + " :No such nick\r\n";
+								bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+								args_count++;
+								continue;
+							}
+							if (!check_new_already_join(arguments[args_count], tokens[0])) {
+								response = ":" + this->getServerName() + " 441 " + client.get_nickname() + " " + tokens[0] + " :He is not on that channel\r\n";
+								bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+								args_count++;
+								continue;
+							}
+							if (check_if_client_exist(arguments[args_count]) && check_new_already_join(arguments[args_count], tokens[0]))
+							{
+								if (!check_if_name_client_is_op(arguments[args_count], tokens[0])) {
+									change_client_mode_o(arguments[args_count], tokens[0], 1);
+									for (std::map<int, Client>::iterator iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
+										if (check_if_client_already_joined((*iter2).second, tokens[0])) {
+											response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + this->getServerName() + " MODE " + tokens[0] + " +o " + arguments[args_count] + "\r\n";
+											bytes_sent = send((*iter2).first, response.c_str(), response.size(), 0);
+										}
+									}
+									args_count++;
+								}
+								else
+								{
+									args_count++;
+									continue;
+								}
 							}
 						}
 						else if (!std::strcmp(options[p].c_str(), "+l"))
 						{
-							if (tokens.size() >= 3)
-							{
-								if (!set_limit(tokens[0], arguments[args_count]))
-								{
-									response = ":" + this->getServerName() + " 468 " + client.get_nickname() + " " + tokens[0] + " :Invalid channel user limit\r\n";
-									bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
-									return ;
-								}
-								if (ch.l == 1 && atoll(arguments[args_count].c_str()) == get_limit_num(tokens[0]))
-								{
-									return ;
-								}
-								if (args_count >= arguments.size())
-								{
-									std::cout << "not enough parameters" << std::endl;
-									continue;
-								}
-								set_channel_mode(tokens[0], 'l', 1);
-								std::cout << "mode l setted" << std::endl;
-								for (std::map<int, Client>::iterator iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
-									if (check_if_client_already_joined((*iter2).second, tokens[0])) {
-										response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + this->getServerName() + " MODE " + tokens[0] + " +l " + arguments[args_count] + "\r\n";
-										bytes_sent = send((*iter2).first, response.c_str(), response.size(), 0);
-									}
-								}
-								args_count++;
-							}
-							else
+							if (args_count >= arguments.size())
 							{
 								response = ":" + this->getServerName() + " 461 " + client.get_nickname() + " MODE :Not enough parameters\r\n";
 								bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+								continue;
 							}
+							if (!set_limit(tokens[0], arguments[args_count]))
+							{
+								response = ":" + this->getServerName() + " 468 " + client.get_nickname() + " " + tokens[0] + " :Invalid channel user limit\r\n";
+								bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+								args_count++;
+								continue;
+							}
+							if (ch.l == 1 && atoll(arguments[args_count].c_str()) == get_limit_num(tokens[0]))
+							{
+								args_count++;
+								continue;
+							}
+							set_channel_mode(tokens[0], 'l', 1);
+							for (std::map<int, Client>::iterator iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
+								if (check_if_client_already_joined((*iter2).second, tokens[0])) {
+									response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + this->getServerName() + " MODE " + tokens[0] + " +l " + arguments[args_count] + "\r\n";
+									bytes_sent = send((*iter2).first, response.c_str(), response.size(), 0);
+								}
+							}
+							args_count++;
 						}
 
 					}
@@ -1264,19 +1249,19 @@ public:
 					{
 						if (!std::strcmp(options[p].c_str(), "-k"))
 						{
-							if (tokens.size() >= 3)
-							{
+								if (args_count >= arguments.size())
+								{
+									response = ":" + this->getServerName() + " 461 " + client.get_nickname() + " MODE :Not enough parameters\r\n";
+									bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+									continue;
+								}
 								if (ch.k == 0)
 								{
-									return;
+									args_count++;
+									continue;
 								}
 								if (check_channel_pass(tokens[0],arguments[args_count]))
 								{
-									if (args_count >= arguments.size())
-									{
-										std::cout << "not enough parameters" << std::endl;
-										continue;
-									}
 									set_channel_psw_and_mode(tokens[0], "", 0);
 									args_count++;
 									for (std::map<int, Client>::iterator iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
@@ -1290,58 +1275,48 @@ public:
 								{
 									response = ":" + this->getServerName() + " 475 " + client.get_nickname() + " " + tokens[0] + " :Cannot remove channel key -bad key\r\n";
 									bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+									args_count++;
 								}
-							}
-							else
-							{
-								response = ":" + this->getServerName() + " 461 " + client.get_nickname() + " MODE :Not enough parameters\r\n";
-								bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
-							}
-
 						}
 						else if (!std::strcmp(options[p].c_str(), "-o"))
 						{
-							if (tokens.size() >= 3)
-							{
-								if (!check_if_client_exist(arguments[args_count]))
-								{
-									response = ":" + this->getServerName() + " 401 " + client.get_nickname() + " " + tokens[3] + " :No such nick\r\n";
-									bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
-									return ;
-								}
-								if (!check_new_already_join(arguments[args_count], tokens[0]))
-								{
-									response = ":" + this->getServerName() + " 441 " + client.get_nickname() + " " + tokens[0] + " :He is not on that channel\r\n";
-									bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
-									return ;
-								}
-								if (check_if_client_exist(arguments[args_count]) && check_new_already_join(arguments[args_count], tokens[0]))
-								{
-									if (!check_if_name_client_is_op(arguments[args_count], tokens[0])) {
-										if (args_count >= arguments.size())
-										{
-											std::cout << "not enough parameters" << std::endl;
-											continue;
-										}
-										change_client_mode_o(arguments[args_count], tokens[0], 0);
-										for (std::map<int, Client>::iterator iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
-											if (check_if_client_already_joined((*iter2).second, tokens[0])) {
-												response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + this->getServerName() + " MODE " + tokens[0] + " -o " + arguments[args_count] + "\r\n";
-												bytes_sent = send((*iter2).first, response.c_str(), response.size(), 0);
-											}
-										}
-										args_count++;
-									}
-									else
-									{
-										return;
-									}
-								}
-							}
-							else
+							if (args_count >= arguments.size())
 							{
 								response = ":" + this->getServerName() + " 461 " + client.get_nickname() + " MODE :Not enough parameters\r\n";
 								bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+								continue;
+							}
+							if (!check_if_client_exist(arguments[args_count]))
+							{
+								response = ":" + this->getServerName() + " 401 " + client.get_nickname() + " " + tokens[3] + " :No such nick\r\n";
+								bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+								args_count++;
+								continue;
+							}
+							if (!check_new_already_join(arguments[args_count], tokens[0]))
+							{
+								response = ":" + this->getServerName() + " 441 " + client.get_nickname() + " " + tokens[0] + " :He is not on that channel\r\n";
+								bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+								args_count++;
+								continue;
+							}
+							if (check_if_client_exist(arguments[args_count]) && check_new_already_join(arguments[args_count], tokens[0]))
+							{
+								if (check_if_name_client_is_op(arguments[args_count], tokens[0])) {
+									change_client_mode_o(arguments[args_count], tokens[0], 0);
+									for (std::map<int, Client>::iterator iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
+										if (check_if_client_already_joined((*iter2).second, tokens[0])) {
+											response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + this->getServerName() + " MODE " + tokens[0] + " -o " + arguments[args_count] + "\r\n";
+											bytes_sent = send((*iter2).first, response.c_str(), response.size(), 0);
+										}
+									}
+									args_count++;
+								}
+								else
+								{
+									args_count++;
+									continue;
+								}
 							}
 						}
 						else if (!std::strcmp(options[p].c_str(), "-l"))
@@ -1359,9 +1334,7 @@ public:
 									}
 								}
 								else
-								{
-									return;
-								}
+									continue;
 							}
 							else
 							{
@@ -1540,14 +1513,20 @@ public:
 		{
 			if (tokens[1] != this->oper_username)
 			{
-				response = ":" + this->getServerName() + " 464 " + tokens[1] + " USER :Username Incorrect\r\n";
+				response = ":" + this->getServerName() + " 464 " + tokens[1] + " OPER :Username Incorrect\r\n";
+				bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+				return;
+			}
+			if (tokens[2] != this->oper_password)
+			{
+				response = ":" + this->getServerName() + " 464 " + tokens[1] + " OPER :Password Incorrect\r\n";
 				bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 				return;
 			}
 		}
 		else
 		{
-			response = ":" + this->getServerName() + " 461 " + client.get_nickname() + " USER :Not enough parameters\r\n";
+			response = ":" + this->getServerName() + " 461 " + client.get_nickname() + " OPER :Not enough parameters\r\n";
 			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 			return ;
 		}
