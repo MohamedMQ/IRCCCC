@@ -1577,10 +1577,3 @@ int main(int ac, char **av)
 	server.ServerRun();
 	return (0);
 }
-
-// @ # ! : $ & ? * > <
-//join channel
-//join multiple channels
-//join an invite only channel
-//join an passworded channel
-//join limit channel
