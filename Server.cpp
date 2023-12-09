@@ -784,13 +784,10 @@ public:
 		char *str2;
 		int i = 0;
 		int flag = 0;
-		std::string buffer_temp;
 		std::string reason;
-		int pos;
 		std::string response;
 		int bytes_sent;
 		std::string buffer_temp = buffer;
-        std::string reason;
         int pos;
 		std::vector<char *> tokens;
 		std::vector<char *> tokens2;
@@ -806,8 +803,10 @@ public:
 			if (tokens.size() >= 2)
 			{
 				pos = buffer_temp.find(tokens[1]);
-				reason = buffer.substr(pos);
+				reason = buffer_temp.substr(pos + 1);
 			}
+			else
+				reason = "";
 			str2 = strtok(tokens[0], ",");
 			while (str2 != NULL)
 			{
@@ -818,13 +817,6 @@ public:
 				if (tokens2[i][0] == '#') {
 					if(check_channel_if_exist(tokens2[i]) && check_if_client_inside_channel(client, tokens2[i]))
 					{
-						if (tokens.size() >= 2)
-						{
-							pos = buffer_temp.find(tokens[1]);
-							reason = buffer_temp.substr(pos + 1);
-						}
-						else
-							reason = "";
 						for (iter = _clients.begin(); iter != _clients.end(); iter++) {
 							if (check_if_client_already_joined((*iter).second, tokens2[i])) {
 								response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + this->getServerName() + " PART " + tokens2[i] + " :" + reason + "\r\n";
