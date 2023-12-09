@@ -108,7 +108,7 @@ public:
 		else if (!std::strcmp(tokens[0], "MODE") && requiredParams(client))
 			mode_command(client, buffer_temp, clientSocket);
 		else if (!std::strcmp(tokens[0], "TOPIC") && requiredParams(client))
-			topic_command(buffer_temp);
+			topic_command(client, buffer_temp);
 		else if (!std::strcmp(tokens[0], "KICK") && requiredParams(client))
 			kick_command(client, buffer_temp);
 		else if (!std::strcmp(tokens[0], "OPER") && requiredParams(client))
@@ -784,6 +784,9 @@ public:
 		char *str2;
 		int i = 0;
 		int flag = 0;
+		std::string buffer_temp;
+		std::string reason;
+		int pos;
 		std::string response;
 		int bytes_sent;
 		std::string buffer_temp = buffer;
@@ -800,6 +803,11 @@ public:
 		}
 		if (tokens.size() >= 1)
 		{
+			if (tokens.size() >= 2)
+			{
+				pos = buffer_temp.find(tokens[1]);
+				reason = buffer.substr(pos);
+			}
 			str2 = strtok(tokens[0], ",");
 			while (str2 != NULL)
 			{
@@ -1451,11 +1459,12 @@ public:
 		}
 	}
 
-	void topic_command(std::string command)
+	void topic_command(Client &client, std::string command)
 	{
 		char *str;
 		std::vector<char *> tokens;
 		std::string topic;
+		ch_modes ch;
 		str = strtok((char *)(command.c_str() + 6), " ");
 		while (str != NULL)
 		{
@@ -1463,14 +1472,27 @@ public:
 			str = strtok(NULL, " ");
 		}
 		if (tokens.size() == 0)
-			std::cout << "syntax errrooor " << std::endl;
+			std::cout << "no enogh parameters" << std::endl;
 		if (tokens.size() > 1)
 		{
 			if (check_channel_if_exist(tokens[0]))
 			{
-				int pos = command.find(tokens[1]);
-				topic = command.substr(pos);
-				set_topic(tokens[0], topic);
+				ch = get_modes(tokens[0]);
+				if (ch.t == 1)
+				{
+					if (check_client_is_op(client, tokens[0]))
+					{
+						int pos = command.find(tokens[1]);
+						topic = command.substr(pos);
+						set_topic(tokens[0], topic);
+					}
+					else
+						std::cerr << "Error(482): #hmed You're not channel operator" << std::endl;
+				}else{
+					int pos = command.find(tokens[1]);
+					topic = command.substr(pos);
+					set_topic(tokens[0], topic);
+				}
 			}
 			else
 				std::cerr << "no such channel" << std::endl;
