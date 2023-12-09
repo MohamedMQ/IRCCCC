@@ -786,8 +786,13 @@ public:
 		int flag = 0;
 		std::string response;
 		int bytes_sent;
+		std::string buffer_temp = buffer;
+        std::string reason;
+        int pos;
 		std::vector<char *> tokens;
 		std::vector<char *> tokens2;
+		std::map<int, Client>::iterator iter;
+
 		str = strtok((char *)(buffer.c_str() + 5), " ");
 		while (str != NULL) {
 			tokens.push_back(str);
@@ -805,8 +810,20 @@ public:
 				if (tokens2[i][0] == '#') {
 					if(check_channel_if_exist(tokens2[i]) && check_if_client_inside_channel(client, tokens2[i]))
 					{
+						if (tokens.size() >= 2)
+						{
+							pos = buffer_temp.find(tokens[1]);
+							reason = buffer_temp.substr(pos + 1);
+						}
+						else
+							reason = "";
+						for (iter = _clients.begin(); iter != _clients.end(); iter++) {
+							if (check_if_client_already_joined((*iter).second, tokens2[i])) {
+								response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + this->getServerName() + " PART " + tokens2[i] + " :" + reason + "\r\n";
+								bytes_sent = send((*iter).first, response.c_str(), response.size(), 0);
+							}
+						}
 						part_from_channel(client ,tokens2[i]);
-						//success response
 					}
 					else if (!check_if_client_inside_channel(client, tokens2[i]) && check_channel_if_exist(tokens2[i]))
 					{
@@ -818,7 +835,8 @@ public:
 						response = ":" + this->getServerName() + " 403 " + client.get_nickname() + " " + tokens2[i] + " :No such channel\r\n";
 						bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 					}
-				} else
+				}
+				else
 				{
 					response = ":" + this->getServerName() + " 403 " + client.get_nickname() + " " + tokens2[i] + " :No such channel\r\n";
 					bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
@@ -827,7 +845,10 @@ public:
 			}
 		}
 		else
-			std::cout << "no enough parameters" << std::endl;
+		{
+			response = ":" + this->getServerName() + " 461 " + client.get_nickname() + " PART :Not enough parameters\r\n";
+			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+		}
 	}
 	//////////////////////////////////invite_command//////////////////////////////////////////////////////////////////////
 
@@ -1333,8 +1354,6 @@ public:
 										}
 									}
 								}
-								else
-									continue;
 							}
 							else
 							{
@@ -1347,20 +1366,53 @@ public:
 					{
 						if (tokens.size() >= 2)
 						{
-							if (!std::strcmp(options[p].c_str(), "+i"))
+							if (!std::strcmp(options[p].c_str(), "+i")
+								&& !ch.i) {
 								set_channel_mode(tokens[0], 'i', 1);
-							else if (!std::strcmp(options[p].c_str(), "+t"))
+								for (std::map<int, Client>::iterator iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
+									if (check_if_client_already_joined((*iter2).second, tokens[0])) {
+										response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + this->getServerName() + " MODE " + tokens[0] + " +i \r\n";
+										bytes_sent = send((*iter2).first, response.c_str(), response.size(), 0);
+									}
+								}
+							}
+							else if (!std::strcmp(options[p].c_str(), "+t")
+									&& !ch.t) {
 								set_channel_mode(tokens[0], 't', 1);
+								for (std::map<int, Client>::iterator iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
+									if (check_if_client_already_joined((*iter2).second, tokens[0])) {
+										response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + this->getServerName() + " MODE " + tokens[0] + " +t \r\n";
+										bytes_sent = send((*iter2).first, response.c_str(), response.size(), 0);
+									}
+								}
+							}
 						}
 					}
 					else if (!std::strcmp(options[p].c_str(), "-i") || !std::strcmp(options[p].c_str(), "-t"))
 					{
 						if (tokens.size() >= 2)
 						{
-							if (!std::strcmp(options[p].c_str(), "-i"))
+							if (!std::strcmp(options[p].c_str(), "-i")
+								&& ch.i) {
 								set_channel_mode(tokens[0], 'i', 0);
-							else if (!std::strcmp(options[p].c_str(), "-t"))
+								for (std::map<int, Client>::iterator iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
+									if (check_if_client_already_joined((*iter2).second, tokens[0])) {
+										response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + this->getServerName() + " MODE " + tokens[0] + " -i \r\n";
+										bytes_sent = send((*iter2).first, response.c_str(), response.size(), 0);
+									}
+								}
+							}
+							else if (!std::strcmp(options[p].c_str(), "-t")
+									&& ch.t)
+							{
 								set_channel_mode(tokens[0], 't', 0);
+								for (std::map<int, Client>::iterator iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
+									if (check_if_client_already_joined((*iter2).second, tokens[0])) {
+										response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + this->getServerName() + " MODE " + tokens[0] + " -t \r\n";
+										bytes_sent = send((*iter2).first, response.c_str(), response.size(), 0);
+									}
+								}
+							}
 						}
 					}
 					else
