@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rennacir <rennacir@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmaqbour <mmaqbour@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/20 15:33:51 by rennacir          #+#    #+#             */
-/*   Updated: 2023/12/07 10:07:40 by rennacir         ###   ########.fr       */
+/*   Updated: 2023/12/09 15:39:19 by mmaqbour         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,6 +37,7 @@ class Channel
 		std::string channel_psw;
 		std::string channel_topic;
 		int client_limit;
+
 	public:
 		Channel();
 		int get_num_of_clients();

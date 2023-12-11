@@ -6,7 +6,7 @@
 /*   By: mmaqbour <mmaqbour@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/20 15:22:02 by rennacir          #+#    #+#             */
-/*   Updated: 2023/12/06 18:09:58 by mmaqbour         ###   ########.fr       */
+/*   Updated: 2023/12/09 15:42:14 by mmaqbour         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,6 +35,7 @@ class Client
 		bool is_pass;
 		bool is_nick;
 		int _retry_pass;
+
 	public:
 		Client();
 		~Client();
