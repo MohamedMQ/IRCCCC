@@ -1,26 +1,23 @@
+
 #include <iostream>
 #include <vector>
 
 
-void split_options(std::string to_split)
-{
-	std::vector<std::string> options;
-	std::string tok;
-	char sign = to_split[0];
-	for (int i = 1; i < to_split.size(); i++)
-	{
-		tok = "";
-		tok += sign;
-		tok+= to_split[i];
-		options.push_back(tok);
-	}
-	for (int i = 0; i < options.size() ; i++)
-	{
-		std::cout << "[" << options[i] << "]" << std::endl;
-	}
-}
-
 int main()
 {
-	split_options("+oprtlk");
+	std::vector<int> vec;
+	vec.push_back(1);
+	vec.push_back(2);
+	vec.push_back(3);
+	vec.push_back(4);
+	for (int i = 0; i < vec.size(); i++)
+	{
+		if (vec[i] == 2)
+			vec.erase(vec.begin() + i);
+	}
+	for (int i = 0; i < vec.size(); i++)
+	{
+		std::cout << 
+	}
+
 }

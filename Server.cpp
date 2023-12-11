@@ -110,7 +110,7 @@ public:
 		else if (!std::strcmp(tokens[0], "TOPIC") && requiredParams(client))
 			topic_command(client, buffer_temp);
 		else if (!std::strcmp(tokens[0], "KICK") && requiredParams(client))
-			kick_command(client, buffer_temp);
+			kick_command(client, buffer_temp, clientSocket);
 		else if (!std::strcmp(tokens[0], "OPER") && requiredParams(client))
 			oper_command(client, buffer_temp, clientSocket);
 		else if (!requiredParams(client))
@@ -1151,7 +1151,7 @@ public:
 		{
 			if (!check_channel_if_exist(tokens[0]))
 			{
-				response = ":" + this->getServerName() + " 403 " + client.get_nickname() + tokens[0] + " :No such channel\r\n";
+				response = ":" + this->getServerName() + " 403 " + client.get_nickname() + " " + tokens[0] + " :No such channel\r\n";
 				bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 				return ;
 			}
@@ -1538,10 +1538,15 @@ public:
 		}
 	}
 
-	void kick_command(Client &client, std::string command)
+	void kick_command(Client &client, std::string command, int &clientSocket)
 	{
 		char *str;
 		std::vector<char *> tokens;
+		std::string response;
+		std::string reason;
+		std::string temp_command = command;
+		int pos;
+		int bytes_sent;
 		str = strtok((char *)(command.c_str() + 5), " ");
 		while (str != NULL)
 		{
@@ -1550,14 +1555,40 @@ public:
 		}
 		if (tokens.size() < 2)
 		{
-			std::cerr << "Not enough parameters" << std::endl;
-			return;
+			response = ":" + this->getServerName() + " 461 " + client.get_nickname() + " KICK :Not enough parameters\r\n";
+			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 		}
-		if (!check_channel_if_exist(tokens[0]) || !check_if_client_exist(tokens[1]) || !check_if_client_already_joined(client, tokens[0]) || !check_if_kicked_client_joined(tokens[1], tokens[0]) || !check_client_is_op(client, tokens[0]))
+		if (!check_channel_if_exist(tokens[0]) || !check_if_client_already_joined(client, tokens[0]))
 		{
-			std::cerr << "eroooooooooooooooooooooooor" << std::endl;
+			response = ":" + this->getServerName() + " 403 " + client.get_nickname() + " " + tokens[0] + " :No such channel\r\n";
+			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 			return;
 		}
+		if (!check_if_client_exist(tokens[1]))
+		{
+			response = ":" + this->getServerName() + " 401 " + client.get_nickname() + " " + tokens[1] + " :No such nick\r\n";
+			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+			return;
+		}
+		if (!check_if_kicked_client_joined(tokens[1], tokens[0]))
+		{
+			std::cout << "Error(441): tokens[1] tokens[0] They aren't on that channel" << std::endl;
+			return;
+		}
+		if (!check_client_is_op(client, tokens[0]))
+		{
+			response = ":" + this->getServerName() + " 482 " + client.get_nickname() + " :You're not channel operator\r\n";
+			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+			return ;
+		}
+		if (tokens.size() >= 3)
+		{
+			pos = temp_command.find(tokens[2]);
+			reason = temp_command.substr(pos);
+		}
+		else
+			reason = client.get_nickname();
+		//success
 		remove_channel_from_client(tokens[1], tokens[0]);
 	}
 
@@ -1589,6 +1620,7 @@ public:
 				bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 				return;
 			}
+			_clients_oper.push_back(client.get_nickname());
 		}
 		else
 		{
