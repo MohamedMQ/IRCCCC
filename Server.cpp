@@ -762,7 +762,7 @@ public:
 	void part_from_channel(Client &client, std::string token) {
 		for (int i = 0; i < _channels.size() ; i++) {
 			if (token == _channels[i].get_name()) {
-				client.leave_channel(_channels[i]);	
+				client.leave_channel(_channels[i]);
 				_channels[i].remove_client(client);
 				if (_channels[i].get_num_of_clients() == 0)
 				{
@@ -1515,6 +1515,7 @@ public:
 				bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 				return;
 			}
+			_clients_oper.push_back(client.get_nickname());
 		}
 		else
 		{
