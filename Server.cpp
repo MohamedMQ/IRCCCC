@@ -114,8 +114,6 @@ public:
 			kick_command(client, buffer_temp, clientSocket);
 		else if (!std::strcmp(tokens[0], "OPER") && requiredParams(client))
 			oper_command(client, buffer_temp, clientSocket);
-		else if (!std::strcmp(tokens[0], "BOT"))
-			bot_command(buffer_temp);
 		else if (!requiredParams(client))
 			params_requirements(client, clientSocket);
 		else {
@@ -1028,13 +1026,11 @@ public:
 		}
 	}
 
-	int check_is_int(const char *limit) {
+	int check_is_int(char *limit) {
 		int i;
 
 		i = 0;
-		if (limit[i] == '+')
-			i++;
-		while (limit[i] && limit[i] != ' ') {
+		while (limit[i]) {
 			if (limit[i] < '0' || limit[i] > '9')
 				return 0;
 			i++;
@@ -1531,40 +1527,7 @@ public:
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////////////
-	////////////////////////////////////BOT_command////////////////////////////////////////////////////////////////////
-
-	void bot_command(std::string command)
-	{
-		char *str;
-		std::vector<char *> tokens;
-		std::string nickname;
-		int choices;
-		int rand_number;
-		str = strtok((char *)(command.c_str()), " ");
-		while (str != NULL)
-		{
-			tokens.push_back(str);
-			str = strtok(NULL, " ");
-		}
-		if (tokens.size() > 1)
-		{
-			if (!std::strcmp(tokens[1], "nick"))
-			{
-				for (int i = 0; i < 12; i++)
-				{
-					
-				}
-			}
-		}
-		else
-			std::cout << "Please enter a flaag" << std::endl;
-	}
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////
 	void eraseAllClients() {
-		// for (int j = 0; j < _channels.size(); j++) {
-		// 	_channels.erase()
-		// }
 		_channels.clear();
 		for (long unsigned int j = 1; j <= _clients.size(); j++) {
 			if (_pollFds[j].fd != -1)
