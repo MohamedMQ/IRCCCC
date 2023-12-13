@@ -116,8 +116,8 @@ public:
 
 	int CreateSocketConnection() {
 		int yes = 1;
-		struct sockaddr_in addr; /////
-		char serverIP[INET_ADDRSTRLEN]; ///////
+		// struct sockaddr_in addr; /////
+		// char serverIP[INET_ADDRSTRLEN]; ///////
 		int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 		if (sockfd < 0) {
 			std::cout << "Error/ninitializing the socket\n";
@@ -129,7 +129,7 @@ public:
 		serverAddress.sin_port = htons(_portNumber);
 		serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
 		setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
-		inet_ntop(AF_INET, &(addr.sin_addr), serverIP, INET_ADDRSTRLEN); ///////
+		// inet_ntop(AF_INET, &(addr.sin_addr), serverIP, INET_ADDRSTRLEN); ///////
 		if (bind(sockfd, (sockaddr *)&serverAddress, sizeof(serverAddress)) == -1) {
 			std::cout << "Error/nbinding with the socket failed\n";
 			close(sockfd);
@@ -163,22 +163,20 @@ public:
 		initClient();
 		std::cout << "Server is running\n";
 		int flag = fcntl(_serverSock, F_GETFL, 0);
-
 		fcntl(_serverSock, F_SETFL, flag | O_NONBLOCK);
-
 		_pollFds[0].fd = _serverSock;
 		_pollFds[0].events = POLLIN;
 		_pollFds[0].revents = 0;
 		int response = 0;
 		int i = 1;
-
 		while (1) {
 			response = poll(_pollFds, _maxClientsNumber, -1);
+			std::cout << "HELLO FROM THE SERVER\n";
 			if (response == -1) {
 				std::cout << "Error\npoll failed\n";
 				return;
 			}
-			if (_pollFds[0].revents && POLLIN) {
+			if (_pollFds[0].revents & POLLIN) {
 				struct sockaddr_in addr;
 				char clientIP[INET_ADDRSTRLEN];
 				socklen_t len;
@@ -193,6 +191,7 @@ public:
 						return;
 				}
 				std::cout << "Client socket is:" << clientSocket << std::endl;
+				send(clientSocket, "hello from server\r\n", strlen("hello from server\r\n"), 0); ////////
 				i = indexClient();
 				_pollFds[i].fd = clientSocket;
 				_pollFds[i].events = POLLIN;
@@ -275,9 +274,9 @@ public:
 	int pars_nickname(std::string nickname)
 	{
 		int i = 0;
-		if (!(nickname[i] >= 'a' && nickname[i] <= 'z')
+		if (!((nickname[i] >= 'a' && nickname[i] <= 'z')
 			|| (nickname[i] >= 'A' && nickname[i] <= 'Z')
-			|| nickname[i] == '_') {
+			|| nickname[i] == '_')) {
 			return 0;
 		}
 		for (int i = 0; i < nickname.size(); i++) {
