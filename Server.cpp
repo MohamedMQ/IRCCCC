@@ -1038,13 +1038,11 @@ public:
 		}
 	}
 
-	int check_is_int(const char *limit) {
+	int check_is_int(char *limit) {
 		int i;
 
 		i = 0;
-		if (limit[i] == '+')
-			i++;
-		while (limit[i] && limit[i] != ' ') {
+		while (limit[i]) {
 			if (limit[i] < '0' || limit[i] > '9')
 				return 0;
 			i++;
@@ -1514,7 +1512,6 @@ public:
 		if (!check_if_kicked_client_joined(tokens[1], tokens[0])) {
 			response = ":" + client.get_nickname() + " 441 " + client.get_nickname() + " " + tokens[1] + " " + tokens[0] + " :They aren't on that channel\r\n";
 			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
-			// std::cout << "Error(441): tokens[1] tokens[0] They aren't on that channel" << std::endl;
 			return;
 		}
 		if (!check_client_is_op(client, tokens[0])) {
@@ -1540,6 +1537,8 @@ public:
 	}
 
 	////////////////////////////////////oper_command////////////////////////////////////////////////////////////////////
+
+
 
 	void oper_command(Client &client, std::string command, int &clientSocket)
 	{
@@ -1577,11 +1576,7 @@ public:
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 	void eraseAllClients() {
-		// for (int j = 0; j < _channels.size(); j++) {
-		// 	_channels.erase()
-		// }
 		_channels.clear();
 		for (long unsigned int j = 1; j <= _clients.size(); j++) {
 			if (_pollFds[j].fd != -1)
