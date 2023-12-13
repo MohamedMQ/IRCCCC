@@ -6,7 +6,7 @@
 /*   By: mmaqbour <mmaqbour@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/20 15:22:02 by rennacir          #+#    #+#             */
-/*   Updated: 2023/12/09 15:42:14 by mmaqbour         ###   ########.fr       */
+/*   Updated: 2023/12/11 16:44:15 by mmaqbour         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,6 +35,7 @@ class Client
 		bool is_pass;
 		bool is_nick;
 		int _retry_pass;
+		char *clientIP;
 
 	public:
 		Client();
@@ -49,6 +50,8 @@ class Client
 		void set_is_passF(int a);
 		void set_is_nickF(int a);
 		void set_is_invited(std::string channel_name);
+		void setClientIP(char *clientIP);
+		char *getClientIP();
 		int get_is_invited(std::string channel_name);
 		void add_channel(Channel &channel, bool a);
 		void modify_channel_bool(Channel &channel, bool a);

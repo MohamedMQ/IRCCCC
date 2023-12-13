@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rennacir <rennacir@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmaqbour <mmaqbour@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/20 15:55:33 by rennacir          #+#    #+#             */
-/*   Updated: 2023/12/06 11:38:14 by rennacir         ###   ########.fr       */
+/*   Updated: 2023/12/11 11:39:17 by mmaqbour         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,9 +47,14 @@ std::string Channel::get_name()
 	return this->name;
 }
 
-void Channel::set_topic(std::string topic)
+void Channel::set_topic(std::string topic, std::string setter)
 {
+	std::time_t now = std::time(nullptr);
+    std::tm timeInfo = *std::localtime(&now);
+
+	std::strftime(topic_time, sizeof(topic_time), "%b %d, %Y at %I:%M %p", &timeInfo);
 	this->channel_topic = topic;
+	this->topic_setter = setter;
 }
 
 std::string Channel::get_topic()
@@ -70,6 +75,14 @@ std::string Channel::get_channel_psw()
 ch_modes Channel::get_modes()
 {
 	return this->modes;
+}
+
+std::string Channel::getTopicSetter() {
+	return this->topic_setter;
+}
+
+char *Channel::getTopicTime() {
+	return this->topic_time;
 }
 
 void Channel::add_client(Client &client)

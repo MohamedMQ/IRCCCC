@@ -6,7 +6,7 @@
 /*   By: mmaqbour <mmaqbour@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/20 15:31:12 by rennacir          #+#    #+#             */
-/*   Updated: 2023/12/06 18:26:34 by mmaqbour         ###   ########.fr       */
+/*   Updated: 2023/12/11 16:43:58 by mmaqbour         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,6 +41,14 @@ int Client::get_is_nickF() {
 int Client::get_is_passF()
 {
 	return this->is_pass;
+}
+
+void Client::setClientIP(char *clientIP) {
+	this->clientIP = clientIP;
+}
+
+char *Client::getClientIP() {
+	return this->clientIP;
 }
 
 void Client::set_is_userF(int a)
