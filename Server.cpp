@@ -106,6 +106,8 @@ public:
 			kick_command(client, buffer_temp, clientSocket);
 		else if (!std::strcmp(tokens[0], "OPER") && requiredParams(client))
 			oper_command(client, buffer_temp, clientSocket);
+		else if ((!std::strcmp(tokens[0], "BOT") && requiredParams(client)))
+			bot_commad(client, buffer_temp, clientSocket);
 		else if (!requiredParams(client))
 			params_requirements(client, clientSocket);
 		else {
@@ -171,7 +173,6 @@ public:
 		int i = 1;
 		while (1) {
 			response = poll(_pollFds, _maxClientsNumber, -1);
-			std::cout << "HELLO FROM THE SERVER\n";
 			if (response == -1) {
 				std::cout << "Error\npoll failed\n";
 				return;
@@ -1368,8 +1369,6 @@ public:
 				response = ":" + client.get_nickname() + " 332 " + client.get_nickname() + " " + token + " " + _channels[i].get_topic() + "\r\n";
 				bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 				if (_channels[i].get_topic().size()) {
-					// response = ":" + client.get_nickname() + " 333 " + client.get_nickname() + " :" + _channels[i].getTopicSetter() + " set the topic at: " + _channels[i].getTopicTime() + "\r\n";
-					// bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 					response = ":" + client.get_nickname() + " 333 " + client.get_nickname() + " " + token + " " + _channels[i].getTopicSetter() + " " + _channels[i].getTopicTime() + "\r\n";
 					bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 				}
@@ -1574,6 +1573,197 @@ public:
 			return ;
 		}
 	}
+	////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	////////////////////////////////////////////////////////pars_bot_command///////////////////////////////////////////
+
+	std::vector<int> count_age(int actual_day, int actual_mounth, int actual_year,int birthday, int birth_mounth, int birth_year)
+	{
+		int day;
+		int mounth;
+		int year;
+		int mounts[] = {31,28,31,30,31,30,31,31,30,31,30,31};
+		std::vector<int> ints;
+		if (birthday > mounts[birth_mounth - 1])
+		{
+			std::cout << "this day does not exist in this mounth" << std::endl;
+		}
+		year = actual_year - birth_year;
+		if (actual_mounth < birth_mounth)
+		{
+			mounth = 12 - (birth_mounth - actual_mounth);
+			year--;
+		}
+		else
+			mounth = actual_mounth - birth_mounth;
+		if (actual_day < birthday)
+		{
+			day = mounts[actual_mounth - 1] - (birthday - actual_day);
+			mounth--;
+		}
+		else
+			day = actual_day - birthday;
+		std::cout << "your age is : ";
+		ints.push_back(day);
+		ints.push_back(mounth);
+		ints.push_back(year);
+		return ints;
+	}
+
+	int get_mounth(std::string mounths[], std::string mounth)
+	{
+		for (int i = 0; i < 12; i++)
+		{
+			if (mounths[i] == mounth)
+				return i + 1;
+		}
+		return 0;
+	}
+
+	std::vector<int> age_bot(char *birth_date)
+	{
+		std::vector<int> ints;
+		char *str;
+		char *str2;
+		int actual_mounth;
+		int actual_day;
+		int actual_year;
+		std::string mounts[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+		std::vector<char *> tokens;
+		time_t now = time(0);
+		char* dt = ctime(&now);
+		std::vector<std::string> tokens2;
+		str2 = strtok(dt, " ");
+		while (str2 != NULL)
+		{
+			tokens2.push_back(str2);
+			str2 = strtok(NULL, " ");
+		}
+		actual_mounth = get_mounth(mounts, tokens2[1]);
+		actual_day = atoi(tokens2[2].c_str());
+		actual_year = atoi(tokens2[4].c_str());
+		str = strtok(birth_date, "-");
+		while (str != NULL)
+		{
+			tokens.push_back(str);
+			str = strtok(NULL, "-");
+		}
+		if (tokens.size() < 3)
+		{
+			std::cout << "Please enter your birthday in format dd-mm-yy" << std::endl;
+		}
+		if (!check_is_int(tokens[0]) || !check_is_int(tokens[1]) || !check_is_int(tokens[2])
+			|| atoll(tokens[0]) < 1 || atoll(tokens[0]) > 31 || atoll(tokens[1]) < 1
+			|| atoll(tokens[1]) > 12 || atoll(tokens[2]) > actual_year)
+		{
+			std::cout << "Please enter your birthday in format dd-mm-yy" << std::endl;
+		}
+		ints = count_age(actual_day, actual_mounth, actual_year, atoi(tokens[0]), atoi(tokens[1]), atoi(tokens[2]));
+		return ints;
+	}
+
+	std::vector<int> pars_bot_command(std::string command)
+	{
+		char *str;
+		std::vector<char *> tokens;
+		std::vector<int> ints;
+		std::string nickname;
+		int choices;
+		int rand_number;
+		str = strtok((char *)(command.c_str()), " ");
+		while (str != NULL)
+		{
+			tokens.push_back(str);
+			str = strtok(NULL, " ");
+		}
+		if (tokens.size() > 1)
+		{
+			if (!std::strcmp(tokens[1], "my_age"))
+			{
+				if (tokens.size() >= 3)
+					ints = age_bot(tokens[2]);
+				else
+					std::cout << "no enough parameters, enter your birthday in format dd-mm-yy" << std::endl;
+			}
+		}
+		else
+			std::cout << "Please enter a flaag" << std::endl;
+		return ints;
+	}
+
+	void bot_commad(Client &client, std::string command, int &clientSocket)
+	{
+		std::vector<int> ints;
+		std::string response;
+		char buffer[1024];
+		memset(buffer, 0, sizeof(buffer));
+		response = recv(clientSocket, buffer, sizeof(buffer), 0);
+		ints = pars_bot_command(command);
+		bot_client(ints);
+		// send response heeere
+	}
+
+	void bot_client(std::vector<int> ints) {
+		std::string _saveSemiCommands;
+		std::string _command;
+		std::vector<int> ints;
+
+		int a = 0;
+		int clientSocket = socket(AF_INET, SOCK_STREAM, 0);
+
+		struct sockaddr_in serverAddr;
+		std::memset(&serverAddr, 0, sizeof(serverAddr));
+		serverAddr.sin_family = AF_INET;
+		serverAddr.sin_port = htons(5555);
+		serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+		if (connect(clientSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == -1) {
+			std::cout << "failed to connect to the server\n";
+			exit(-1);
+		} else {
+			std::cout << "the client got connected to the server correctly\n";
+		}
+		int response = 0;
+		while (1) {
+				char buffer[1024];
+				memset(buffer, 0, sizeof(buffer));
+				response = recv(clientSocket, buffer, sizeof(buffer), 0);
+				if (response == -1) {
+					std::cout << "Error\nrecv failed: " << response << std::endl;
+					if (errno == EAGAIN || errno == EWOULDBLOCK)
+						continue;
+					else
+						return;
+					} else if (response == 0) {
+						std::cout << "the server is closed for now, try later\n";
+						close(clientSocket);
+						return;
+					} else {
+						std::string receivedData(buffer, response);
+						std::string &partialCommand = _saveSemiCommands;
+						partialCommand += receivedData;
+
+						if (!partialCommand.empty()) {
+							size_t newlinePos = partialCommand.find('\n');
+							while (newlinePos != std::string::npos) {
+								_command = partialCommand.substr(0, newlinePos);
+								std::cout  << _command << std::endl;
+								partialCommand = partialCommand.substr(newlinePos + 1);
+								newlinePos = partialCommand.find('\n');
+								if (!a) {
+									a = 1;
+									send(clientSocket, "PASS popo\r\n", strlen("PASS popo\r\n"), 0);
+									send(clientSocket, "NICK BOT\r\n", strlen("NICK BOT\r\n"), 0);
+									send(clientSocket, "USER BOT 0 * BOT\r\n", strlen("USER BOT 0 * BOT\r\n"), 0);
+								}
+									std::string resp = "your age is : " + std::to_string(ints[2]) + " year, " + std::to_string(ints[1]) + " mounths, " + std::to_string(ints[0]) + "days";
+									send(clientSocket, resp.c_str(), resp.size() , 0);
+							}
+						}
+					}
+		}
+}
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////
 	void eraseAllClients() {
 		_channels.clear();
