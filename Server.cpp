@@ -1648,11 +1648,7 @@ public:
 			tokens.push_back(str);
 			str = strtok(NULL, "-");
 		}
-		if (tokens.size() < 3)
-		{
-			std::cout << "Please enter your birthday in format dd-mm-yy" << std::endl;
-		}
-		if (!check_is_int(tokens[0]) || !check_is_int(tokens[1]) || !check_is_int(tokens[2])
+		if (tokens.size() < 3 || !check_is_int(tokens[0]) || !check_is_int(tokens[1]) || !check_is_int(tokens[2])
 			|| atoll(tokens[0]) < 1 || atoll(tokens[0]) > 31 || atoll(tokens[1]) < 1
 			|| atoll(tokens[1]) > 12 || atoll(tokens[2]) > actual_year)
 		{
@@ -1667,9 +1663,6 @@ public:
 		char *str;
 		std::vector<char *> tokens;
 		std::vector<int> ints;
-		std::string nickname;
-		int choices;
-		int rand_number;
 		str = strtok((char *)(command.c_str()), " ");
 		while (str != NULL)
 		{
@@ -1700,13 +1693,13 @@ public:
 		response = recv(clientSocket, buffer, sizeof(buffer), 0);
 		ints = pars_bot_command(command);
 		bot_client(ints);
+		
 		// send response heeere
 	}
 
 	void bot_client(std::vector<int> ints) {
 		std::string _saveSemiCommands;
 		std::string _command;
-		std::vector<int> ints;
 
 		int a = 0;
 		int clientSocket = socket(AF_INET, SOCK_STREAM, 0);
