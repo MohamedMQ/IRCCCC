@@ -75,36 +75,36 @@ public:
 	void executeAll(Client &client, std::string buffer, int &clientSocket, std::string _password) {
 		std::string buffer_temp = buffer;
 		char *str;
-		std::vector<char *> tokens;
+		std::vector<std::string> tokens;
 		str = strtok((char *)(buffer.c_str()), " ");
 		while (str != NULL) {
 			tokens.push_back(str);
 			str = strtok (NULL, " ");
 		}
-		if (!std::strcmp(tokens[0], "USER") && client.get_is_passF())
+		if (tokens[0] == "USER" && client.get_is_passF())
 			user_command(buffer_temp, client, clientSocket);
-		else if (!std::strcmp(tokens[0], "NICK") && client.get_is_passF())
+		else if (tokens[0] == "NICK" && client.get_is_passF())
 			nickname_command(buffer_temp, client, clientSocket);
-		else if (!std::strcmp(tokens[0], "PASS"))
+		else if (tokens[0] == "PASS")
 			pass_command(client, buffer_temp, clientSocket);
-		else if (!std::strcmp(tokens[0], "QUIT") && client.get_is_passF()) {
+		else if (tokens[0] == "QUIT" && client.get_is_passF()) {
 			if (quit_command(clientSocket, buffer_temp) == -1)
 				return;
-		} else if (!std::strcmp(tokens[0], "PRIVMSG") && requiredParams(client))
+		} else if (tokens[0] == "PRIVMSG" && requiredParams(client))
 			privmsg_command(client, buffer_temp, clientSocket);
-		else if (!std::strcmp(tokens[0], "JOIN") && requiredParams(client))
+		else if (tokens[0] == "JOIN" && requiredParams(client))
 			join_command(client, buffer_temp, clientSocket);
-		else if (!std::strcmp(tokens[0], "PART") && requiredParams(client))
+		else if (tokens[0] == "PART" && requiredParams(client))
 			part_command(client, buffer_temp, clientSocket);
-		else if (!std::strcmp(tokens[0], "INVITE") && requiredParams(client))
+		else if (tokens[0] == "INVITE" && requiredParams(client))
 			invite_command(client, buffer_temp, clientSocket);
-		else if (!std::strcmp(tokens[0], "MODE") && requiredParams(client))
+		else if (tokens[0] == "MODE" && requiredParams(client))
 			mode_command(client, buffer_temp, clientSocket);
-		else if (!std::strcmp(tokens[0], "TOPIC") && requiredParams(client))
+		else if (tokens[0] == "TOPIC" && requiredParams(client))
 			topic_command(client, buffer_temp, clientSocket);
-		else if (!std::strcmp(tokens[0], "KICK") && requiredParams(client))
+		else if (tokens[0] == "KICK" && requiredParams(client))
 			kick_command(client, buffer_temp, clientSocket);
-		else if (!std::strcmp(tokens[0], "OPER") && requiredParams(client))
+		else if (tokens[0] == "OPER" && requiredParams(client))
 			oper_command(client, buffer_temp, clientSocket);
 		else if (!requiredParams(client))
 			params_requirements(client, clientSocket);
@@ -191,7 +191,7 @@ public:
 						return;
 				}
 				std::cout << "Client socket is:" << clientSocket << std::endl;
-				send(clientSocket, "hello from server\r\n", strlen("hello from server\r\n"), 0); ////////
+				// send(clientSocket, "hello from server\r\n", strlen("hello from server\r\n"), 0); /////////
 				i = indexClient();
 				_pollFds[i].fd = clientSocket;
 				_pollFds[i].events = POLLIN;
@@ -199,6 +199,8 @@ public:
 				_clients.insert(std::make_pair(_pollFds[i].fd, Client()));
 				inet_ntop(AF_INET, &(addr.sin_addr), clientIP, INET_ADDRSTRLEN);
 				_clients[_pollFds[i].fd].setClientIP(clientIP);
+				int flag = fcntl(_pollFds[i].fd, F_GETFL, 0);
+				fcntl(_pollFds[i].fd, F_SETFL, flag | O_NONBLOCK);
 			}
 			for (long unsigned int j = 1; j <= _clients.size(); j++) {
 				if (_pollFds[j].fd == -1)
@@ -208,7 +210,7 @@ public:
 					memset(buffer, 0, sizeof(buffer));
 					response = recv(_pollFds[j].fd, buffer, sizeof(buffer), 0);
 					if (response == -1) {
-						std::cout << "Socket fd: " << _pollFds[j].fd << " J is " << j << std::endl;
+						std::cout << "Socket fd: " << _pollFds[j].fd << " is " << j << std::endl;
 						std::cout << "Error\nrecv failed: " << response << std::endl;
 						if (errno == EAGAIN || errno == EWOULDBLOCK)
 							continue;
