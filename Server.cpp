@@ -90,7 +90,7 @@ public:
 		else if (!std::strcmp(tokens[0], "QUIT") && client.get_is_passF()) {
 			if (quit_command(clientSocket, buffer_temp) == -1)
 				return;
-		} else if (!std::strcmp(tokens[0], "PRIVMSG") && requiredParams(client))
+		} else if (!std::strcmp(tokens[0], "PRIVMSG") && std::strcmp(tokens[1], "bot") && requiredParams(client))
 			privmsg_command(client, buffer_temp, clientSocket);
 		else if (!std::strcmp(tokens[0], "JOIN") && requiredParams(client))
 			join_command(client, buffer_temp, clientSocket);
@@ -106,7 +106,7 @@ public:
 			kick_command(client, buffer_temp, clientSocket);
 		else if (!std::strcmp(tokens[0], "OPER") && requiredParams(client))
 			oper_command(client, buffer_temp, clientSocket);
-		else if ((!std::strcmp(tokens[0], "BOT") && requiredParams(client)))
+		else if ((!std::strcmp(tokens[0], "PRIVMSG") && !std::strcmp(tokens[1], "bot") && requiredParams(client)))
 			bot_commad(client, buffer_temp, clientSocket);
 		else if (!requiredParams(client))
 			params_requirements(client, clientSocket);
@@ -1038,18 +1038,6 @@ public:
 		}
 	}
 
-	int check_is_int(char *limit) {
-		int i;
-
-		i = 0;
-		while (limit[i]) {
-			if (limit[i] < '0' || limit[i] > '9')
-				return 0;
-			i++;
-		}
-		return 1;
-	}
-
 	int set_limit(std::string channel_name, std::string sett) {
 		long long a;
 
@@ -1210,7 +1198,7 @@ public:
 								args_count++;
 								continue;
 							}
-							if (ch.l == 1 && atoll(arguments[args_count].c_str()) == get_limit_num(tokens[0])) {
+							if (ch.l == 1 && atol(arguments[args_count].c_str()) == get_limit_num(tokens[0])) {
 								args_count++;
 								continue;
 							}
@@ -1381,6 +1369,8 @@ public:
 		char *str;
 		std::vector<char *> tokens;
 		std::string topic;
+		std::string temp_command;
+		temp_command = command;
 		ch_modes ch;
 		std::string response;
 		int bytes_sent;
@@ -1401,8 +1391,8 @@ public:
 				ch = get_modes(tokens[0]);
 				if (ch.t == 1) {
 					if (check_client_is_op(client, tokens[0])) {
-						int pos = command.find(tokens[1]);
-						topic = command.substr(pos);
+						int pos = temp_command.find(tokens[1]);
+						topic = temp_command.substr(pos);
 						set_topic(tokens[0], topic, client.get_nickname());
 						for (std::map<int, Client>::iterator iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
 							if (check_if_client_already_joined((*iter2).second, tokens[0])) {
@@ -1412,16 +1402,19 @@ public:
 						}
 					}
 					else {
-						response = ":" + client.get_nickname() + " 482 " + client.get_nickname() + " :You're not channel operator\r\n";
+						response = ":" + client.get_nickname() + " 482 " + client.get_nickname() + " :4You're not channel operator\r\n";
 						bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 					}
 				} else {
-					int pos = command.find(tokens[1]);
-					topic = command.substr(pos);
+					int pos = temp_command.find(tokens[1]);
+					if (tokens[1][0] == ':')
+						topic = temp_command.substr(pos + 1);
+					else
+						topic = temp_command.substr(pos);
 					set_topic(tokens[0], topic, client.get_nickname());
 					for (std::map<int, Client>::iterator iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
 						if (check_if_client_already_joined((*iter2).second, tokens[0])) {
-							response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + clientIP + " TOPIC " + tokens[0] + " :" + tokens[1] + "\r\n";
+							response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + clientIP + " TOPIC " + tokens[0] + " :" + topic + "\r\n";
 							bytes_sent = send((*iter2).first, response.c_str(), response.size(), 0);
 						}
 					}
@@ -1577,185 +1570,49 @@ public:
 
 	////////////////////////////////////////////////////////pars_bot_command///////////////////////////////////////////
 
-	std::vector<int> count_age(int actual_day, int actual_mounth, int actual_year,int birthday, int birth_mounth, int birth_year)
+	void bot_commad(Client &client, std::string command, int &clientSocket)
 	{
-		int day;
-		int mounth;
-		int year;
-		int mounts[] = {31,28,31,30,31,30,31,31,30,31,30,31};
-		std::vector<int> ints;
-		if (birthday > mounts[birth_mounth - 1])
-		{
-			std::cout << "this day does not exist in this mounth" << std::endl;
-		}
-		year = actual_year - birth_year;
-		if (actual_mounth < birth_mounth)
-		{
-			mounth = 12 - (birth_mounth - actual_mounth);
-			year--;
-		}
-		else
-			mounth = actual_mounth - birth_mounth;
-		if (actual_day < birthday)
-		{
-			day = mounts[actual_mounth - 1] - (birthday - actual_day);
-			mounth--;
-		}
-		else
-			day = actual_day - birthday;
-		std::cout << "your age is : ";
-		ints.push_back(day);
-		ints.push_back(mounth);
-		ints.push_back(year);
-		return ints;
-	}
-
-	int get_mounth(std::string mounths[], std::string mounth)
-	{
-		for (int i = 0; i < 12; i++)
-		{
-			if (mounths[i] == mounth)
-				return i + 1;
-		}
-		return 0;
-	}
-
-	std::vector<int> age_bot(char *birth_date)
-	{
-		std::vector<int> ints;
+		std::map<int, Client>::iterator iter;
+		std::string response;
+		std::string temp_command;
+		int bytes_sent;
+		temp_command = command;
+		std::string f_command;
 		char *str;
-		char *str2;
-		int actual_mounth;
-		int actual_day;
-		int actual_year;
-		std::string mounts[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+		int pos;
 		std::vector<char *> tokens;
-		time_t now = time(0);
-		char* dt = ctime(&now);
-		std::vector<std::string> tokens2;
-		str2 = strtok(dt, " ");
-		while (str2 != NULL)
-		{
-			tokens2.push_back(str2);
-			str2 = strtok(NULL, " ");
-		}
-		actual_mounth = get_mounth(mounts, tokens2[1]);
-		actual_day = atoi(tokens2[2].c_str());
-		actual_year = atoi(tokens2[4].c_str());
-		str = strtok(birth_date, "-");
-		while (str != NULL)
-		{
-			tokens.push_back(str);
-			str = strtok(NULL, "-");
-		}
-		if (tokens.size() < 3 || !check_is_int(tokens[0]) || !check_is_int(tokens[1]) || !check_is_int(tokens[2])
-			|| atoll(tokens[0]) < 1 || atoll(tokens[0]) > 31 || atoll(tokens[1]) < 1
-			|| atoll(tokens[1]) > 12 || atoll(tokens[2]) > actual_year)
-		{
-			std::cout << "Please enter your birthday in format dd-mm-yy" << std::endl;
-		}
-		ints = count_age(actual_day, actual_mounth, actual_year, atoi(tokens[0]), atoi(tokens[1]), atoi(tokens[2]));
-		return ints;
-	}
-
-	std::vector<int> pars_bot_command(std::string command)
-	{
-		char *str;
-		std::vector<char *> tokens;
-		std::vector<int> ints;
 		str = strtok((char *)(command.c_str()), " ");
 		while (str != NULL)
 		{
 			tokens.push_back(str);
 			str = strtok(NULL, " ");
 		}
-		if (tokens.size() > 1)
+		if (tokens.size() == 3 && !std::strcmp(tokens[2], "nickname"))
 		{
-			if (!std::strcmp(tokens[1], "my_age"))
-			{
-				if (tokens.size() >= 3)
-					ints = age_bot(tokens[2]);
-				else
-					std::cout << "no enough parameters, enter your birthday in format dd-mm-yy" << std::endl;
-			}
+			pos = temp_command.find(tokens[2]);
+			f_command = temp_command.substr(pos) + " " + client.get_nickname() + "\n";
+		}
+		else if (tokens.size() == 4 && !std::strcmp(tokens[2], ":my_age"))
+		{
+			pos = temp_command.find(tokens[2]);
+			f_command = temp_command.substr(pos + 1) + " " + client.get_nickname() + "\n";
 		}
 		else
-			std::cout << "Please enter a flaag" << std::endl;
-		return ints;
-	}
+		{
+			response = ":" + this->getServerName() + " 461 " + client.get_nickname() + "USAGE :USAGE:	my_age dd-mm-yy, nickame\r\n";
+			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+			return;
+		}
+		for (iter = _clients.begin(); iter != _clients.end(); iter++)
+		{
+			if((*iter).second.get_nickname() == "BOT")
+				break;
+		}
+		std::cout << "reeda :" << temp_command << std::endl;
+		bytes_sent = send((*iter).first, f_command.c_str(), f_command.size(), 0);
 
-	void bot_commad(Client &client, std::string command, int &clientSocket)
-	{
-		std::vector<int> ints;
-		std::string response;
-		char buffer[1024];
-		memset(buffer, 0, sizeof(buffer));
-		response = recv(clientSocket, buffer, sizeof(buffer), 0);
-		ints = pars_bot_command(command);
-		bot_client(ints);
-		
 		// send response heeere
 	}
-
-	void bot_client(std::vector<int> ints) {
-		std::string _saveSemiCommands;
-		std::string _command;
-
-		int a = 0;
-		int clientSocket = socket(AF_INET, SOCK_STREAM, 0);
-
-		struct sockaddr_in serverAddr;
-		std::memset(&serverAddr, 0, sizeof(serverAddr));
-		serverAddr.sin_family = AF_INET;
-		serverAddr.sin_port = htons(5555);
-		serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-
-		if (connect(clientSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == -1) {
-			std::cout << "failed to connect to the server\n";
-			exit(-1);
-		} else {
-			std::cout << "the client got connected to the server correctly\n";
-		}
-		int response = 0;
-		while (1) {
-				char buffer[1024];
-				memset(buffer, 0, sizeof(buffer));
-				response = recv(clientSocket, buffer, sizeof(buffer), 0);
-				if (response == -1) {
-					std::cout << "Error\nrecv failed: " << response << std::endl;
-					if (errno == EAGAIN || errno == EWOULDBLOCK)
-						continue;
-					else
-						return;
-					} else if (response == 0) {
-						std::cout << "the server is closed for now, try later\n";
-						close(clientSocket);
-						return;
-					} else {
-						std::string receivedData(buffer, response);
-						std::string &partialCommand = _saveSemiCommands;
-						partialCommand += receivedData;
-
-						if (!partialCommand.empty()) {
-							size_t newlinePos = partialCommand.find('\n');
-							while (newlinePos != std::string::npos) {
-								_command = partialCommand.substr(0, newlinePos);
-								std::cout  << _command << std::endl;
-								partialCommand = partialCommand.substr(newlinePos + 1);
-								newlinePos = partialCommand.find('\n');
-								if (!a) {
-									a = 1;
-									send(clientSocket, "PASS popo\r\n", strlen("PASS popo\r\n"), 0);
-									send(clientSocket, "NICK BOT\r\n", strlen("NICK BOT\r\n"), 0);
-									send(clientSocket, "USER BOT 0 * BOT\r\n", strlen("USER BOT 0 * BOT\r\n"), 0);
-								}
-									std::string resp = "your age is : " + std::to_string(ints[2]) + " year, " + std::to_string(ints[1]) + " mounths, " + std::to_string(ints[0]) + "days";
-									send(clientSocket, resp.c_str(), resp.size() , 0);
-							}
-						}
-					}
-		}
-}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////
 	void eraseAllClients() {
