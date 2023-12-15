@@ -90,7 +90,7 @@ public:
 		else if (tokens[0] == "QUIT" && client.get_is_passF()) {
 			if (quit_command(clientSocket, buffer_temp) == -1)
 				return;
-		} else if (tokens[0] == "PRIVMSG" && requiredParams(client))
+		} else if (tokens[0] == "PRIVMSG" && tokens[1] != "bot" && requiredParams(client))
 			privmsg_command(client, buffer_temp, clientSocket);
 		else if (tokens[0] == "JOIN" && requiredParams(client))
 			join_command(client, buffer_temp, clientSocket);
@@ -106,6 +106,8 @@ public:
 			kick_command(client, buffer_temp, clientSocket);
 		else if (tokens[0] == "OPER" && requiredParams(client))
 			oper_command(client, buffer_temp, clientSocket);
+		else if (tokens[0] ==  "PRIVMSG" && tokens[1] == "bot" && requiredParams(client))
+			bot_commad(client, buffer_temp, clientSocket);
 		else if (!requiredParams(client))
 			params_requirements(client, clientSocket);
 		else {
@@ -171,7 +173,6 @@ public:
 		int i = 1;
 		while (1) {
 			response = poll(_pollFds, _maxClientsNumber, -1);
-			std::cout << "HELLO FROM THE SERVER\n";
 			if (response == -1) {
 				std::cout << "Error\npoll failed\n";
 				return;
@@ -1039,18 +1040,6 @@ public:
 		}
 	}
 
-	int check_is_int(char *limit) {
-		int i;
-
-		i = 0;
-		while (limit[i]) {
-			if (limit[i] < '0' || limit[i] > '9')
-				return 0;
-			i++;
-		}
-		return 1;
-	}
-
 	int set_limit(std::string channel_name, std::string sett) {
 		long long a;
 
@@ -1211,7 +1200,7 @@ public:
 								args_count++;
 								continue;
 							}
-							if (ch.l == 1 && atoll(arguments[args_count].c_str()) == get_limit_num(tokens[0])) {
+							if (ch.l == 1 && atol(arguments[args_count].c_str()) == get_limit_num(tokens[0])) {
 								args_count++;
 								continue;
 							}
@@ -1370,8 +1359,6 @@ public:
 				response = ":" + client.get_nickname() + " 332 " + client.get_nickname() + " " + token + " " + _channels[i].get_topic() + "\r\n";
 				bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 				if (_channels[i].get_topic().size()) {
-					// response = ":" + client.get_nickname() + " 333 " + client.get_nickname() + " :" + _channels[i].getTopicSetter() + " set the topic at: " + _channels[i].getTopicTime() + "\r\n";
-					// bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 					response = ":" + client.get_nickname() + " 333 " + client.get_nickname() + " " + token + " " + _channels[i].getTopicSetter() + " " + _channels[i].getTopicTime() + "\r\n";
 					bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 				}
@@ -1384,6 +1371,8 @@ public:
 		char *str;
 		std::vector<char *> tokens;
 		std::string topic;
+		std::string temp_command;
+		temp_command = command;
 		ch_modes ch;
 		std::string response;
 		int bytes_sent;
@@ -1404,27 +1393,30 @@ public:
 				ch = get_modes(tokens[0]);
 				if (ch.t == 1) {
 					if (check_client_is_op(client, tokens[0])) {
-						int pos = command.find(tokens[1]);
-						topic = command.substr(pos);
+						int pos = temp_command.find(tokens[1]);
+						topic = temp_command.substr(pos);
 						set_topic(tokens[0], topic, client.get_nickname());
 						for (std::map<int, Client>::iterator iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
 							if (check_if_client_already_joined((*iter2).second, tokens[0])) {
-								response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + clientIP + " TOPIC " + tokens[0] + " :" + tokens[1] + "\r\n";
+								response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + clientIP + " TOPIC " + tokens[0] + " :" + topic + "\r\n";
 								bytes_sent = send((*iter2).first, response.c_str(), response.size(), 0);
 							}
 						}
 					}
 					else {
-						response = ":" + client.get_nickname() + " 482 " + client.get_nickname() + " :You're not channel operator\r\n";
+						response = ":" + client.get_nickname() + " 482 " + client.get_nickname() + " :4You're not channel operator\r\n";
 						bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 					}
 				} else {
-					int pos = command.find(tokens[1]);
-					topic = command.substr(pos);
+					int pos = temp_command.find(tokens[1]);
+					if (tokens[1][0] == ':')
+						topic = temp_command.substr(pos + 1);
+					else
+						topic = temp_command.substr(pos);
 					set_topic(tokens[0], topic, client.get_nickname());
 					for (std::map<int, Client>::iterator iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
 						if (check_if_client_already_joined((*iter2).second, tokens[0])) {
-							response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + clientIP + " TOPIC " + tokens[0] + " :" + tokens[1] + "\r\n";
+							response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + clientIP + " TOPIC " + tokens[0] + " :" + topic + "\r\n";
 							bytes_sent = send((*iter2).first, response.c_str(), response.size(), 0);
 						}
 					}
@@ -1576,6 +1568,54 @@ public:
 			return ;
 		}
 	}
+	////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	////////////////////////////////////////////////////////pars_bot_command///////////////////////////////////////////
+
+	void bot_commad(Client &client, std::string command, int &clientSocket)
+	{
+		std::map<int, Client>::iterator iter;
+		std::string response;
+		std::string temp_command;
+		int bytes_sent;
+		temp_command = command;
+		std::string f_command;
+		char *str;
+		int pos;
+		std::vector<char *> tokens;
+		str = strtok((char *)(command.c_str()), " ");
+		while (str != NULL)
+		{
+			tokens.push_back(str);
+			str = strtok(NULL, " ");
+		}
+		if (tokens.size() == 3 && !std::strcmp(tokens[2], "nickname"))
+		{
+			pos = temp_command.find(tokens[2]);
+			f_command = temp_command.substr(pos) + " " + client.get_nickname() + "\n";
+		}
+		else if (tokens.size() == 4 && !std::strcmp(tokens[2], ":my_age"))
+		{
+			pos = temp_command.find(tokens[2]);
+			f_command = temp_command.substr(pos + 1) + " " + client.get_nickname() + "\n";
+		}
+		else
+		{
+			response = ":" + this->getServerName() + " 461 " + client.get_nickname() + "USAGE :USAGE:	my_age dd-mm-yy, nickame\r\n";
+			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+			return;
+		}
+		for (iter = _clients.begin(); iter != _clients.end(); iter++)
+		{
+			if((*iter).second.get_nickname() == "BOT")
+				break;
+		}
+		std::cout << "reeda :" << temp_command << std::endl;
+		bytes_sent = send((*iter).first, f_command.c_str(), f_command.size(), 0);
+
+		// send response heeere
+	}
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////
 	void eraseAllClients() {
 		_channels.clear();

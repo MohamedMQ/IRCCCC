@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // <<<<<<< HEAD
 
 // // #include <iostream>
@@ -25,6 +26,8 @@
 
 // =======
 // >>>>>>> 8ce2f2e4478ff64fce39d3d860f7ae87c1041859
+=======
+>>>>>>> rida_branch
 #include <iostream>
 #include <cstring>
 #include <unistd.h>
@@ -43,6 +46,7 @@
 #include <poll.h>
 #include <iostream>
 #include <map>
+<<<<<<< HEAD
 #include <vector>
 // <<<<<<< HEAD
 // #include <arpa/inet.h>
@@ -155,3 +159,15 @@ int main() {
     long i = std::atol("922337203685477580009");
     std::cout << i << std::endl;
 }
+=======
+#include <vector>z
+using namespace std;
+#include <ctime>
+
+int main(int argc, char **argv)
+{
+	std::string a = ""
+  return 0;
+}
+
+>>>>>>> rida_branch
