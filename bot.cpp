@@ -214,12 +214,7 @@ int main(int ac, char **av) {
 		std::cout << "Error\nfailed connecting to the server\n";
 		exit (-1);
 	} else
-	{
 		std::cout << "Success\nsuccessed connecting to the server\n";
-		send(clientSocket, "PASS popo\r\n", strlen("PASS popo\r\n"), 0);
-		send(clientSocket, "NICK BOT\r\n", strlen("NICK BOT\r\n"), 0);
-		send(clientSocket, "USER BOT 0 * BOT\r\n", strlen("USER BOT 0 * BOT\r\n"), 0);
-	}
 	flag = fcntl(clientSocket, F_GETFL, 0);
 	fcntl(clientSocket, F_SETFL, flag | O_NONBLOCK);
 	_pollFd = new struct pollfd;
