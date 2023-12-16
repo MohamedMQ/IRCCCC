@@ -10,6 +10,7 @@ private:
 	int _portNumber;
 	int _serverSock;
 	int _maxClientsNumber;
+	int _connectedClients;
 	std::string _serverName;
 	struct pollfd *_pollFds;
 	std::map<int, Client> _clients;
@@ -25,6 +26,7 @@ public:
 		_password = password;
 		_portNumber = port;
 		_maxClientsNumber = 50;
+		_connectedClients = 0;
 		_serverName = "TIGERS";
 		_pollFds = new struct pollfd[_maxClientsNumber];
 	}
@@ -108,6 +110,7 @@ public:
 			oper_command(client, buffer_temp, clientSocket);
 		else if (tokens[0] ==  "PRIVMSG" && tokens[1] == "bot" && requiredParams(client))
 			bot_commad(client, buffer_temp, clientSocket);
+		else if (tokens[0] == "PONG") {}
 		else if (!requiredParams(client))
 			params_requirements(client, clientSocket);
 		else {
@@ -118,20 +121,20 @@ public:
 
 	int CreateSocketConnection() {
 		int yes = 1;
-		// struct sockaddr_in addr; /////
-		// char serverIP[INET_ADDRSTRLEN]; ///////
+		struct sockaddr_in addr;
+		char serverIP[INET_ADDRSTRLEN];
 		int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 		if (sockfd < 0) {
 			std::cout << "Error/ninitializing the socket\n";
 			return -1;
 		}
 		setServerSock(sockfd);
-		sockaddr_in serverAddress; //////
+		sockaddr_in serverAddress;
 		serverAddress.sin_family = AF_INET;
 		serverAddress.sin_port = htons(_portNumber);
 		serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
 		setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
-		// inet_ntop(AF_INET, &(addr.sin_addr), serverIP, INET_ADDRSTRLEN); ///////
+		inet_ntop(AF_INET, &(addr.sin_addr), serverIP, INET_ADDRSTRLEN);
 		if (bind(sockfd, (sockaddr *)&serverAddress, sizeof(serverAddress)) == -1) {
 			std::cout << "Error/nbinding with the socket failed\n";
 			close(sockfd);
@@ -192,7 +195,6 @@ public:
 						return;
 				}
 				std::cout << "Client socket is:" << clientSocket << std::endl;
-				// send(clientSocket, "hello from server\r\n", strlen("hello from server\r\n"), 0); /////////
 				i = indexClient();
 				_pollFds[i].fd = clientSocket;
 				_pollFds[i].events = POLLIN;
@@ -344,6 +346,43 @@ public:
 		return 1;
 	}
 
+	void welcomeMsg(Client &client, int &socket) {
+		std::string response;
+		int bytes_sent;
+		std::string clientIP(client.getClientIP());
+
+		response = ":" + _clients[socket].get_nickname() + " 001 " + _clients[socket].get_nickname() + " :Welcome to the IRC Network, " + _clients[socket].get_nickname() + "!" + _clients[socket].get_username() + "@" + clientIP + "\r\n";
+		bytes_sent = send(socket, response.c_str(), response.size(), 0);
+		response = ":" + _clients[socket].get_nickname() + " 001 " + _clients[socket].get_nickname() + " :Your host is Khouribga.MO." + this->getServerName() + ".Org, running version u1.1.0.0\r\n";
+		bytes_sent = send(socket, response.c_str(), response.size(), 0);
+		response = ":" + _clients[socket].get_nickname() + " 001 " + _clients[socket].get_nickname() + " :This server was created 10:30:12 Dec 15 2023\r\n";
+		bytes_sent = send(socket, response.c_str(), response.size(), 0);
+		response = ":" + _clients[socket].get_nickname() + " 001 " + _clients[socket].get_nickname() + " :There is " + std::to_string(_channels.size()) + " channels formed\r\n";
+		bytes_sent = send(socket, response.c_str(), response.size(), 0);
+		response = ":" + _clients[socket].get_nickname() + " 001 " + _clients[socket].get_nickname() + " :I have " + std::to_string(_clients.size()) + " clients and 1 server\r\n";
+		bytes_sent = send(socket, response.c_str(), response.size(), 0);
+		response = ":" + _clients[socket].get_nickname() + " 001 " + _clients[socket].get_nickname() + " : \r\n";
+		bytes_sent = send(socket, response.c_str(), response.size(), 0);
+		response = ":" + _clients[socket].get_nickname() + " 001 " + _clients[socket].get_nickname() + " :Welcome to the world of\r\n";
+		bytes_sent = send(socket, response.c_str(), response.size(), 0);
+		response = ":" + _clients[socket].get_nickname() + " 001 " + _clients[socket].get_nickname() + " :.___________. __    _______  _______ .______          _______.\r\n";
+		bytes_sent = send(socket, response.c_str(), response.size(), 0);
+		response = ":" + _clients[socket].get_nickname() + " 001 " + _clients[socket].get_nickname() + " :|           ||  |  /  _____||   ____||   _  \\        /       |\r\n";
+		bytes_sent = send(socket, response.c_str(), response.size(), 0);
+		response = ":" + _clients[socket].get_nickname() + " 001 " + _clients[socket].get_nickname() + " :`---|  |----`|  | |  |  __  |  |__   |  |_)  |      |   (----`\r\n";
+		bytes_sent = send(socket, response.c_str(), response.size(), 0);
+		response = ":" + _clients[socket].get_nickname() + " 001 " + _clients[socket].get_nickname() + " :     |  |     |  | |  | |_ | |   __|  |      /        \\   \\    \r\n";
+		bytes_sent = send(socket, response.c_str(), response.size(), 0);
+		response = ":" + _clients[socket].get_nickname() + " 001 " + _clients[socket].get_nickname() + " :     |  |     |  | |  |__| | |  |____ |  |\\  \\----.----)   |   \r\n";
+		bytes_sent = send(socket, response.c_str(), response.size(), 0);
+		response = ":" + _clients[socket].get_nickname() + " 001 " + _clients[socket].get_nickname() + " :     |__|     |__|  \\______| |_______|| _| `._____|_______/   \r\n";
+		bytes_sent = send(socket, response.c_str(), response.size(), 0);
+		response = ":" + _clients[socket].get_nickname() + " 001 " + _clients[socket].get_nickname() + " : \r\n";
+		bytes_sent = send(socket, response.c_str(), response.size(), 0);
+		response = ":" + _clients[socket].get_nickname() + " 001 " + _clients[socket].get_nickname() + " : \r\n";
+		bytes_sent = send(socket, response.c_str(), response.size(), 0);
+	}
+
 	void user_command(std::string _command, Client &client, int &socket) {
 		std::string response;
 		int bytes_sent;
@@ -354,8 +393,7 @@ public:
 			if (!pars_user_command(_command, flag, client, socket))
 				return;
 			fill_client(_command, client, flag);
-			std::string response = ":" + _clients[socket].get_nickname() + " 001 " + _clients[socket].get_nickname() + " :Welcome to the IRC Network " + _clients[socket].get_nickname() + "!" + _clients[socket].get_username() + "@" + clientIP + "\r\n";
-			int bytes_sent = send(socket, response.c_str(), response.size(), 0);
+			welcomeMsg(client, socket);
 			client.set_is_userF(1);
 		} else {
 			response = ":" + _clients[socket].get_nickname() + " 462 " + client.get_nickname() + " :You may not reregister\r\n";
@@ -1162,7 +1200,7 @@ public:
 								continue;
 							}
 							if (!check_if_client_exist(arguments[args_count])) {
-								response = ":" + client.get_nickname() + " 401 " + client.get_nickname() + " " + tokens[3] + " :No such nick\r\n";
+								response = ":" + client.get_nickname() + " 401 " + client.get_nickname() + " " + tokens[2] + " :No such nick\r\n";
 								bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 								args_count++;
 								continue;
@@ -1245,7 +1283,7 @@ public:
 								continue;
 							}
 							if (!check_if_client_exist(arguments[args_count])) {
-								response = ":" + client.get_nickname() + " 401 " + client.get_nickname() + " " + tokens[3] + " :No such nick\r\n";
+								response = ":" + client.get_nickname() + " 401 " + client.get_nickname() + " " + tokens[2] + " :No such nick\r\n";
 								bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 								args_count++;
 								continue;
