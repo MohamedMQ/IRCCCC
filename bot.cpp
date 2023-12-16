@@ -102,7 +102,7 @@
 			|| atol(tokens[0]) < 1 || atol(tokens[0]) > 31 || atol(tokens[1]) < 1
 			|| atol(tokens[1]) > 12 || atol(tokens[2]) > actual_year)
 		{
-			response = ":" + client_name + " 461 " + client_name + " Invalid format : dd-mm-yy\r\n";
+			response = "PRIVMSG " + client_name + " " + "Invalid format: dd-mm-yy" +  " \r\n";
 			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 			return;
 		}
@@ -114,7 +114,7 @@
 		}
 		else
 		{
-			response = ":" + client_name + " 461 " + client_name + " Invalid day\r\n";
+			response = "PRIVMSG " + client_name + " " + "Invalid day" +  " \r\n";
 			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 			return;
 		}
@@ -134,7 +134,6 @@
 		bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 		for (int i = 0; i < 10; i++)
 		{
-			// nicknames = "";
 			ran3 = std::rand() % 2;
 			if (ran3 == 0)
 			{
@@ -182,7 +181,7 @@
 					age_bot((char *)tokens[1].c_str(), tokens[2], clientSocket);
 				else
 				{
-					response = ":" + tokens[2] + " 461 " + tokens[2] + " Invalid format :Invalid format: dd-mm-yy\r\n";
+					response = "PRIVMSG " + tokens[2] + " " + "Invalid format: dd-mm-yy" +  " \r\n";
 					bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 				}
 			}
@@ -215,12 +214,7 @@ int main(int ac, char **av) {
 		std::cout << "Error\nfailed connecting to the server\n";
 		exit (-1);
 	} else
-	{
 		std::cout << "Success\nsuccessed connecting to the server\n";
-		send(clientSocket, "PASS popo\r\n", strlen("PASS popo\r\n"), 0);
-		send(clientSocket, "NICK BOT\r\n", strlen("NICK BOT\r\n"), 0);
-		send(clientSocket, "USER BOT 0 * BOT\r\n", strlen("USER BOT 0 * BOT\r\n"), 0);
-	}
 	flag = fcntl(clientSocket, F_GETFL, 0);
 	fcntl(clientSocket, F_SETFL, flag | O_NONBLOCK);
 	_pollFd = new struct pollfd;
