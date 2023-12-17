@@ -69,8 +69,6 @@ void Server::executeAll(Client &client, std::string buffer, int &clientSocket, s
 		topic_command(client, buffer_temp, clientSocket);
 	else if (tokens[0] == "KICK" && requiredParams(client))
 		kick_command(client, buffer_temp, clientSocket);
-	else if (tokens[0] == "OPER" && requiredParams(client))
-		oper_command(client, buffer_temp, clientSocket);
 	else if (tokens[0] == "PONG") {}
 	else if (!requiredParams(client))
 		params_requirements(client, clientSocket);
