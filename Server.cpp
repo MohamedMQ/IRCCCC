@@ -1,7 +1,5 @@
 #include "irc.hpp"
 
-//////  10.12.5.4
-
 class Server
 {
 private:
@@ -19,6 +17,7 @@ private:
 	std::vector<std::string> _clients_oper;
 	std::string oper_username;
 	std::string oper_password;
+	void (*ptr)(int);
 
 public:
 	Server(std::string password, int port)
@@ -393,6 +392,7 @@ public:
 		}
 		return 1;
 	}
+
 	void welcomeMsg(Client &client, int &socket) {
 		std::string response;
 		int bytes_sent;
@@ -1297,7 +1297,7 @@ public:
 		{
 			if (_channels[i].get_name() == channel_name)
 			{
-				a = atoll(sett.c_str());
+				a = atol(sett.c_str());
 				if (a == 0 || a < 0 || a > 1337)
 					return 0;
 				_channels[i].set_limit_num_of_clients(atoi(sett.c_str()));
@@ -2036,17 +2036,17 @@ public:
 		_channels.clear();
 		for (long unsigned int j = 1; j <= _clients.size(); j++)
 		{
-			if (_pollFds[j].fd != -1)
+			if (_pollFds[j].fd != -1 && _pollFds[j].fd != 0)
 				close(_pollFds[j].fd);
 		}
 		_clients.clear();
 		close(_pollFds[0].fd);
 		exit(0);
 	}
+
 };
 
 Server server("", 0);
-
 void signal_handler(int sig)
 {
 	server.eraseAllClients();
@@ -2057,10 +2057,9 @@ int main(int ac, char **av)
 {
 	int socket;
 	signal(SIGINT, signal_handler);
-
 	if (ac != 3)
 	{
-		std::cerr << "Wrong parametres !!!\nUsage: ./ft_irc (port) (password)\n";
+		std::cerr << "Wrong parametres !!!\nUsage: ./ft_irc (port) (password >= 8)\n";
 		return (0);
 	}
 	server.setPass(av[2]);

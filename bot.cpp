@@ -12,6 +12,9 @@
 #include <map>
 #include <vector>
 #include <arpa/inet.h>
+#include <signal.h>
+
+int clientSocket;
 
 	int check_is_int(char *limit) {
 		int i;
@@ -192,16 +195,21 @@
 		return ints;
 	}
 
+void signal_handler(int sig)
+{
+	close(clientSocket);
+	exit(1);
+}
+
 int main(int ac, char **av) {
 	std::string _saveSemiCommands;
 	struct sockaddr_in serverAddr;
 	std::string _command;
+	signal(SIGINT, signal_handler);
 	std::vector<int> ints;
 	struct pollfd *_pollFd;
-	int clientSocket;
 	char buffer[1024];
 	int flag;
-
 	std::memset(&serverAddr, 0, sizeof(serverAddr));
 	clientSocket = socket(AF_INET, SOCK_STREAM, 0);
 	serverAddr.sin_family = AF_INET;
