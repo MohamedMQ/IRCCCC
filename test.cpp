@@ -19,7 +19,7 @@
 // // // 	}
 // // // 	for (int i = 0; i < vec.size(); i++)
 // // // 	{
-// // // 		std::cout << 
+// // // 		std::cout <<
 // // // 	}
 
 // // // }
@@ -217,3 +217,52 @@ int main() {
 
     return 0;
 }
+//part
+//part #chan
+//part #chan,#chan2
+//part #chan,chan2
+//part #chan,#chan2 reason
+//part #chan,chan2 reason
+// JOIN #a,#b,#c,#d,#e
+
+//invite
+//invite rida
+//invite rida chan
+//invite rida #chan
+//invite and
+
+//+l or l is same
+// ila tbeddel l khass i3awed itsifet msg
+//  unknown mode char to me
+
+//mode
+//mode chan
+//mode #chan i
+//mode #chan +i
+//mode #chan -i
+//mode #chan +l
+//mode #chan l
+//mode #chan -l
+//mode #chan -l param
+//mode #chan +l num
+//mode #chan +l 145
+//mode #chan +l 1338
+//mode #chan +o
+//mode #chan +o makaynch,makaynch2
+//mode #chan +o kayn
+//mode #chan -o
+//mode #chan -o kayn
+//mode #chan +k
+//mode #chan +k pass khte2
+//mode #chan +k pass s7eeee7
+//mode #chan -k pass  khate2
+//mode #chan -k pass s7e7
+//mode #chan + pass s7e7
+
+
+// TOPIC
+// TOPIC chan
+// TOPIC #chan
+// TOPIC chan msg
+// TOPIC #chan msg
+// TOPIC #chan - >> not op

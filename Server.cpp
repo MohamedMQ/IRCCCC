@@ -110,7 +110,7 @@ public:
 			if (quit_command(clientSocket, buffer_temp) == -1)
 				return;
 		}
-		else if (tokens[0] == "PRIVMSG" && tokens[1] != "bot" && requiredParams(client))
+		else if (tokens[0] == "PRIVMSG" && requiredParams(client))
 			privmsg_command(client, buffer_temp, clientSocket);
 		else if (tokens[0] == "JOIN" && requiredParams(client))
 			join_command(client, buffer_temp, clientSocket);
@@ -126,8 +126,6 @@ public:
 			kick_command(client, buffer_temp, clientSocket);
 		else if (tokens[0] == "OPER" && requiredParams(client))
 			oper_command(client, buffer_temp, clientSocket);
-		else if (tokens[0] == "PRIVMSG" && tokens[1] == "bot" && requiredParams(client))
-			bot_commad(client, buffer_temp, clientSocket);
 		else if (tokens[0] == "PONG") {}
 		else if (!requiredParams(client))
 			params_requirements(client, clientSocket);
@@ -146,7 +144,7 @@ public:
 		int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 		if (sockfd < 0)
 		{
-			std::cout << "Error/ninitializing the socket\n";
+			std::cerr << "Error/ninitializing the socket\n";
 			return -1;
 		}
 		setServerSock(sockfd);
@@ -510,14 +508,10 @@ public:
 
 	int quit_command(int &socket, std::string command)
 	{
-		if (!std::strcmp((command.substr(0, 4)).c_str(), "QUIT"))
-		{
-			close(socket);
-			_clients.erase(socket);
-
-			socket = -1;
-			return -1;
-		}
+		close(socket);
+		_clients.erase(socket);
+		socket = -1;
+		return -1;
 		return 0;
 	}
 
@@ -637,7 +631,6 @@ public:
 		std::vector<std::string> tokens;
 		std::map<int, Client>::iterator iter;
 		std::map<int, Client>::iterator iter2;
-
 		str = strtok((char *)(command.c_str()), " ");
 		while (str != NULL)
 		{
@@ -656,6 +649,8 @@ public:
 			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 			return;
 		}
+		else if (tokens[1] == "bot")
+			bot_commad(client, temp_command, clientSocket);
 		else
 		{
 			if (tokens[1][0] == '#')
@@ -875,7 +870,6 @@ public:
 						}
 						if (ch.l == 1 && !not_reach_limit(tokens2[i]))
 						{
-							std::cout << "SEG HERE JOIN 1\n";
 							response = ":" + client.get_nickname() + " 471 " + client.get_nickname() + " " + tokens2[i] + " :Cannot join channel (+l)\r\n";
 							bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 							i++;
@@ -883,7 +877,6 @@ public:
 						}
 						if (i == 0 && tokens.size() >= 2 && ch.k == 1 && !check_password(tokens2[0], tokens[1]))
 						{
-							std::cout << "SEG HERE JOIN 2\n";
 							response = ":" + client.get_nickname() + " 457 " + client.get_nickname() + " " + tokens2[i] + " :Cannot join channel (+k)\r\n";
 							bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 							i++;
@@ -891,7 +884,6 @@ public:
 						}
 						else if (i == 0 && ch.k == 1 && tokens.size() < 2)
 						{
-							std::cout << "SEG HERE JOIN 3\n";
 							response = ":" + client.get_nickname() + " 457 " + client.get_nickname() + " " + tokens2[i] + " :Cannot join channel (+k)\r\n";
 							bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 							i++;
@@ -899,7 +891,6 @@ public:
 						}
 						else if (i != 0 && ch.k == 1)
 						{
-							std::cout << "SEG HERE JOIN 4\n";
 							response = ":" + client.get_nickname() + " 457 " + client.get_nickname() + " " + tokens2[i] + " :Cannot join channel (+k)\r\n";
 							bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 							i++;
@@ -1023,7 +1014,10 @@ public:
 			if (tokens.size() >= 2)
 			{
 				pos = buffer_temp.find(tokens[1]);
-				reason = buffer_temp.substr(pos + 1);
+				if (tokens[1][0] == ':')
+					reason = buffer_temp.substr(pos + 1);
+				else
+					reason = buffer_temp.substr(pos);
 			}
 			else
 				reason = "";
@@ -1155,7 +1149,6 @@ public:
 			std::string chann_name = temp_buffer.substr(pos);
 			if (!check_if_client_exist(tokens[0]))
 			{
-				// std::cerr << "no such client with this name" << std::endl;
 				response = ":" + client.get_nickname() + " 401 " + client.get_nickname() + " " + tokens[0] + " :No such nick\r\n";
 				bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 				return;
@@ -1164,7 +1157,6 @@ public:
 			{
 				response = ":" + client.get_nickname() + " 403 " + client.get_nickname() + " " + chann_name + " :No such channel\r\n";
 				bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
-				// std::cerr << "no such channel with this name" << std::endl;
 				return;
 			}
 			if (check_if_kicked_client_joined(tokens[0], chann_name))
@@ -1188,20 +1180,17 @@ public:
 				response = ":" + client.get_nickname() + " 001 " + client.get_nickname() + " :Inviting " + tokens[0] + " to " + chann_name + "\r\n";
 				bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 				add_channel_to_invited(tokens[0], chann_name);
-				// std::cout << "youv been invited" << std::endl;
 			}
 			else
 			{
 				response = ":" + client.get_nickname() + " 481 " + client.get_nickname() + " :Permission Denied- You're not an IRC operator\r\n";
 				bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
-				// std::cerr << "client need to be an opp" << std::endl;
 			}
 		}
 		else
 		{
 			response = ":" + client.get_nickname() + " 461 " + client.get_nickname() + " INVITE :Not enough parameters\r\n";
 			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
-			// std::cout << "no enough parameters" << std::endl;
 		}
 	}
 
@@ -1250,8 +1239,6 @@ public:
 				}
 			}
 		}
-		else
-			std::cerr << "clients does not exist" << std::endl;
 		return 0;
 	}
 
@@ -1350,10 +1337,21 @@ public:
 	{
 		std::vector<std::string> options;
 		std::string tok;
+		int i = 0;
 		char sign;
-
-		sign = to_split[0];
-		for (int i = 1; i < to_split.size(); i++)
+		if (to_split[0] == '+') {
+			sign = '+';
+			i++;
+		}
+		else if(to_split[0] != '-') {
+			sign = '+';
+		}
+		else if(to_split[0] == '-')
+		{
+			sign = '-';
+			i++;
+		}
+		for (; i < to_split.size(); i++)
 		{
 			tok = "";
 			tok += sign;
@@ -1392,6 +1390,12 @@ public:
 			tokens.push_back(str);
 			str = strtok(NULL, " ");
 		}
+		if (tokens.size() < 2)
+		{
+			response = ":" + client.get_nickname() + " 461 " + client.get_nickname() + " MODE :Not enough parameters\r\n";
+			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+			return;
+		}
 		if (tokens.size() >= 2)
 		{
 			if (!check_channel_if_exist(tokens[0]))
@@ -1413,9 +1417,10 @@ public:
 				arguments = get_arguments(tokens);
 				for (int p = 0; p < options.size(); p++)
 				{
-					if (!std::strcmp(options[p].c_str(), "+k") || !std::strcmp(options[p].c_str(), "+o") || !std::strcmp(options[p].c_str(), "+l"))
+					if (!std::strcmp(options[p].c_str(), "+k") || !std::strcmp(options[p].c_str(), "+o") || !std::strcmp(options[p].c_str(), "+l")
+						|| !std::strcmp(options[p].c_str(), "k") || !std::strcmp(options[p].c_str(), "o") || !std::strcmp(options[p].c_str(), "l"))
 					{
-						if (!std::strcmp(options[p].c_str(), "+k"))
+						if (!std::strcmp(options[p].c_str(), "+k") || !std::strcmp(options[p].c_str(), "k"))
 						{
 							if (ch.k == 1)
 							{
@@ -1441,7 +1446,7 @@ public:
 							}
 							args_count++;
 						}
-						else if (!std::strcmp(options[p].c_str(), "+o"))
+						else if (!std::strcmp(options[p].c_str(), "+o") || !std::strcmp(options[p].c_str(), "o"))
 						{
 							if (args_count >= arguments.size())
 							{
@@ -1485,7 +1490,7 @@ public:
 								}
 							}
 						}
-						else if (!std::strcmp(options[p].c_str(), "+l"))
+						else if (!std::strcmp(options[p].c_str(), "+l") || !std::strcmp(options[p].c_str(), "l"))
 						{
 							if (args_count >= arguments.size())
 							{
@@ -1619,11 +1624,12 @@ public:
 							}
 						}
 					}
-					else if (!std::strcmp(options[p].c_str(), "+i") || !std::strcmp(options[p].c_str(), "+t"))
+					else if (!std::strcmp(options[p].c_str(), "+i") || !std::strcmp(options[p].c_str(), "+t")
+							|| !std::strcmp(options[p].c_str(), "i") || !std::strcmp(options[p].c_str(), "t"))
 					{
 						if (tokens.size() >= 2)
 						{
-							if (!std::strcmp(options[p].c_str(), "+i") && !ch.i)
+							if ((!std::strcmp(options[p].c_str(), "+i") || !std::strcmp(options[p].c_str(), "i")) && !ch.i)
 							{
 								set_channel_mode(tokens[0], 'i', 1);
 								for (std::map<int, Client>::iterator iter2 = _clients.begin(); iter2 != _clients.end(); iter2++)
@@ -1635,7 +1641,7 @@ public:
 									}
 								}
 							}
-							else if (!std::strcmp(options[p].c_str(), "+t") && !ch.t)
+							else if ((!std::strcmp(options[p].c_str(), "+t") || !std::strcmp(options[p].c_str(), "t")) && !ch.t)
 							{
 								set_channel_mode(tokens[0], 't', 1);
 								for (std::map<int, Client>::iterator iter2 = _clients.begin(); iter2 != _clients.end(); iter2++)
@@ -1681,7 +1687,7 @@ public:
 					}
 					else
 					{
-						response = ":" + client.get_nickname() + " 472 " + client.get_nickname() + tokens[0] + " :is unknown mode char to me\r\n";
+						response = ":" + client.get_nickname() + " 472 " + client.get_nickname() + tokens[0] + " " + options[p].substr(1) +  " :is unknown mode char to me\r\n";
 						bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 					}
 				}
@@ -1741,13 +1747,20 @@ public:
 			tokens.push_back(str);
 			str = strtok(NULL, " ");
 		}
-		if (tokens.size() == 1 && !std::strcmp(tokens[0], ":"))
+		if (tokens.size() == 0 || (tokens.size() == 1 && !std::strcmp(tokens[0], ":")))
 		{
-			std::cout << "no enogh parameters" << std::endl;
+			response = ":" + client.get_nickname() + " 461 " + client.get_nickname() + " TOPIC :Not enough parameters\r\n";
+			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 			return;
 		}
 		if (tokens.size() > 1)
 		{
+			if(!check_if_client_already_joined(client, tokens[0]))
+			{
+				response = ":" + client.get_nickname() + " 442 " + client.get_nickname() + " " + tokens[0] + " :You're not on that channel\r\n";
+				bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+				return;
+			}
 			if (check_channel_if_exist(tokens[0]))
 			{
 				ch = get_modes(tokens[0]);
@@ -1769,7 +1782,7 @@ public:
 					}
 					else
 					{
-						response = ":" + client.get_nickname() + " 482 " + client.get_nickname() + " :4You're not channel operator\r\n";
+						response = ":" + client.get_nickname() + " 482 " + client.get_nickname() + " :You're not channel operator\r\n";
 						bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 					}
 				}
@@ -1875,15 +1888,21 @@ public:
 			tokens.push_back(str);
 			str = strtok(NULL, " ");
 		}
-		if (tokens.size() <= 2)
+		if (tokens.size() < 2 || (tokens.size() == 2 && !std::strcmp(tokens[1], ":")))
 		{
 			response = ":" + client.get_nickname() + " 461 " + client.get_nickname() + " KICK :Not enough parameters\r\n";
 			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 			return;
 		}
-		if (!check_channel_if_exist(tokens[0]) || !check_if_client_already_joined(client, tokens[0]))
+		if (!check_channel_if_exist(tokens[0]))
 		{
 			response = ":" + client.get_nickname() + " 403 " + client.get_nickname() + " " + tokens[0] + " :No such channel\r\n";
+			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+			return;
+		}
+		if (!check_if_client_already_joined(client, tokens[0]))
+		{
+			response = ":" + client.get_nickname() + " 442 " + client.get_nickname() + " " + tokens[0] + " :You're not on that channel\r\n";
 			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 			return;
 		}
@@ -1990,7 +2009,7 @@ public:
 			pos = temp_command.find(tokens[2]);
 			f_command = temp_command.substr(pos) + " " + client.get_nickname() + "\n";
 		}
-		else if (tokens.size() == 4 && !std::strcmp(tokens[2], ":my_age"))
+		else if (tokens.size() == 4 && (!std::strcmp(tokens[2], ":my_age") || !std::strcmp(tokens[2], " ennacsfmy_age")))
 		{
 			pos = temp_command.find(tokens[2]);
 			f_command = temp_command.substr(pos + 1) + " " + client.get_nickname() + "\n";
@@ -2006,7 +2025,6 @@ public:
 			if ((*iter).second.get_nickname() == "BOT")
 				break;
 		}
-		std::cout << "reeda :" << temp_command << std::endl;
 		bytes_sent = send((*iter).first, f_command.c_str(), f_command.size(), 0);
 
 		// send response heeere
@@ -2042,7 +2060,7 @@ int main(int ac, char **av)
 
 	if (ac != 3)
 	{
-		std::cout << "Wrong parametres !!!\nUsage: ./ft_irc (port) (password)\n";
+		std::cerr << "Wrong parametres !!!\nUsage: ./ft_irc (port) (password)\n";
 		return (0);
 	}
 	server.setPass(av[2]);

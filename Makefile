@@ -6,11 +6,11 @@
 #    By: rennacir <rennacir@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/11/23 15:58:10 by rennacir          #+#    #+#              #
-#    Updated: 2023/12/01 12:53:16 by rennacir         ###   ########.fr        #
+#    Updated: 2023/12/17 11:22:33 by rennacir         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-FLAGS 			= -std=c++98
+FLAGS 			= -std=c++98 #-Wall -Werror -Wextra
 NAME 			= irc
 CC				= c++
 RM				= rm -fr

@@ -170,9 +170,6 @@
 			tokens.push_back(str);
 			str = strtok(NULL, " ");
 		}
-		std::cout << "size : " << tokens.size() << std::endl;
-
-
 		if (tokens.size() >= 1)
 		{
 			if (tokens[0] == "my_age")
