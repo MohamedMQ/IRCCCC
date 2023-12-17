@@ -177,45 +177,48 @@
 #include <stdlib.h>
 #include <arpa/inet.h>
 
+#define a 2147483647
+
 int main() {
-    int serverSocket;
-    struct sockaddr_in serverAddr;
-    socklen_t addrLen = sizeof(serverAddr);
+    std::cout << a + 1 << std::endl;
+    // int serverSocket;
+    // struct sockaddr_in serverAddr;
+    // socklen_t addrLen = sizeof(serverAddr);
 
-    // Create a socket
-    serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-    if (serverSocket == -1) {
-        perror("Socket creation failed");
-        exit(EXIT_FAILURE);
-    }
+    // // Create a socket
+    // serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+    // if (serverSocket == -1) {
+    //     perror("Socket creation failed");
+    //     exit(EXIT_FAILURE);
+    // }
 
-    // Bind the socket to an address and port
-    serverAddr.sin_family = AF_INET;
-    serverAddr.sin_addr.s_addr = INADDR_ANY;
-    serverAddr.sin_port = htons(8080);
+    // // Bind the socket to an address and port
+    // serverAddr.sin_family = AF_INET;
+    // serverAddr.sin_addr.s_addr = INADDR_ANY;
+    // serverAddr.sin_port = htons(8080);
 
-    if (bind(serverSocket, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) == -1) {
-        perror("Bind failed");
-        close(serverSocket);
-        exit(EXIT_FAILURE);
-    }
+    // if (bind(serverSocket, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) == -1) {
+    //     perror("Bind failed");
+    //     close(serverSocket);
+    //     exit(EXIT_FAILURE);
+    // }
 
-    // Get the bound IP address
-    if (getsockname(serverSocket, (struct sockaddr *)&serverAddr, &addrLen) == -1) {
-        perror("Getsockname failed");
-        close(serverSocket);
-        exit(EXIT_FAILURE);
-    }
+    // // Get the bound IP address
+    // if (getsockname(serverSocket, (struct sockaddr *)&serverAddr, &addrLen) == -1) {
+    //     perror("Getsockname failed");
+    //     close(serverSocket);
+    //     exit(EXIT_FAILURE);
+    // }
 
-    char ipAddress[INET_ADDRSTRLEN];
-    inet_ntop(AF_INET, &(serverAddr.sin_addr), ipAddress, INET_ADDRSTRLEN);
+    // char ipAddress[INET_ADDRSTRLEN];
+    // inet_ntop(AF_INET, &(serverAddr.sin_addr), ipAddress, INET_ADDRSTRLEN);
 
-    printf("Server IP address: %s\n", ipAddress);
+    // printf("Server IP address: %s\n", ipAddress);
 
-    // Close the socket
-    close(serverSocket);
+    // // Close the socket
+    // close(serverSocket);
 
-    return 0;
+    // return 0;
 }
 //part
 //part #chan
