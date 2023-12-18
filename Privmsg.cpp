@@ -5,7 +5,7 @@ int Server::check_channel_if_exist(std::string channel_name)
 	int flag;
 
 	flag = 0;
-	for (int i = 0; i < _channels.size(); i++)
+	for (unsigned long i = 0; i < _channels.size(); i++)
 	{
 		if (_channels[i].get_name() == channel_name)
 			flag = 1337;
@@ -98,7 +98,7 @@ void Server::privmsg_command(Client &client, std::string command, int &clientSoc
 		{
 			if (check_if_client_already_joined(client, tokens[1]))
 			{
-				for (int i = 0; i < _channels.size(); i++)
+				for (unsigned long i = 0; i < _channels.size(); i++)
 				{
 					if (_channels[i].get_name() == tokens[1])
 					{

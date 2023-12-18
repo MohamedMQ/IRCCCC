@@ -9,7 +9,7 @@ int Server::pars_nickname(std::string nickname)
 	}
 	if (nickname.size() > 14 || nickname.size() < 7)
 		return 0;
-	for (int i = 0; i < nickname.size(); i++)
+	for (unsigned long i = 0; i < nickname.size(); i++)
 	{
 		if ((nickname[i] >= 'a' && nickname[i] <= 'z') || (nickname[i] >= 'A' && nickname[i] <= 'Z') || (nickname[i] >= '1' && nickname[i] <= '9') || nickname[i] == '_' || nickname[i] == '[' || nickname[i] == ']' || nickname[i] == '}' || nickname[i] == '{' || nickname[i] == '\\' || nickname[i] == '|')
 			continue;

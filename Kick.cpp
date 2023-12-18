@@ -4,7 +4,7 @@ int Server::check_if_kicked_client_joined(std::string client_name, std::string c
 {
 	std::map<int, Client>::iterator iter;
 
-	for (int i = 0; i < _channels.size(); i++)
+	for (unsigned long i = 0; i < _channels.size(); i++)
 	{
 		if (channel_name == _channels[i].get_name())
 		{
@@ -31,7 +31,7 @@ void Server::remove_channel_from_client(std::string client_name, std::string cha
 	{
 		if ((*iter).second.get_nickname() == client_name)
 		{
-			for (int i = 0; i < _channels.size(); i++)
+			for (unsigned long i = 0; i < _channels.size(); i++)
 			{
 				if (channel_name == _channels[i].get_name())
 				{

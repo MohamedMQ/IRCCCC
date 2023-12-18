@@ -42,24 +42,22 @@ void Server::params_requirements(Client &client, int &clientSocket)
 	if (!client.get_is_passF())
 	{
 		std::string response = ":" + this->getServerName() + " 464 " + client.get_nickname() + " :You must identify with a password before running commands\r\n";
-		int bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+		bytes_read = send(clientSocket, response.c_str(), response.size(), 0);
 	}
 	else if (!client.get_is_nickF())
 	{
 		std::string response = ":" + this->getServerName() + " 431 " + client.get_nickname() + " :No nickname given. Use NICK command to set your nickname\r\n";
-		int bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+		bytes_read = send(clientSocket, response.c_str(), response.size(), 0);
 	}
 	else
 	{
 		std::string response = ":" + this->getServerName() + " 451 * :No username given. Use USER command to set your username\r\n";
-		int bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+		bytes_read = send(clientSocket, response.c_str(), response.size(), 0);
 	}
 }
 
 Server::Server(std::string password, int port)
 {
-	oper_username = "mmaqbour";
-	oper_password = "rennacir";
 	_password = password;
 	_portNumber = port;
 	_maxClientsNumber = 50;
@@ -211,9 +209,9 @@ void Server::ServerRun()
 							if (_command == "\0")
 								continue;
 							if (_command.find('\r') != std::string::npos)
-								executeAll(_clients[_pollFds[j].fd], _command.substr(0, _command.size() - 1), _pollFds[j].fd, _password);
+								executeAll(_clients[_pollFds[j].fd], _command.substr(0, _command.size() - 1), _pollFds[j].fd);
 							else
-								executeAll(_clients[_pollFds[j].fd], _command, _pollFds[j].fd, _password);
+								executeAll(_clients[_pollFds[j].fd], _command, _pollFds[j].fd);
 						}
 					}
 				}

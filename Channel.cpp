@@ -6,7 +6,7 @@
 /*   By: mmaqbour <mmaqbour@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/20 15:55:33 by rennacir          #+#    #+#             */
-/*   Updated: 2023/12/11 11:39:17 by mmaqbour         ###   ########.fr       */
+/*   Updated: 2023/12/18 10:45:04 by mmaqbour         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,7 +92,7 @@ void Channel::add_client(Client &client)
 
 void Channel::remove_client(Client &client)
 {
-	for (int i = 0; i < this->clients.size() ; i++)
+	for (unsigned long i = 0; i < this->clients.size() ; i++)
 	{
 		if (this->clients[i] == client.get_nickname())
 			this->clients.erase(this->clients.begin() + i);

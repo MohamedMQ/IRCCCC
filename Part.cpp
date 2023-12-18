@@ -2,7 +2,7 @@
 
 void Server::part_from_channel(Client &client, std::string token)
 {
-	for (int i = 0; i < _channels.size(); i++)
+	for (unsigned long i = 0; i < _channels.size(); i++)
 	{
 		if (token == _channels[i].get_name())
 		{
@@ -23,7 +23,7 @@ void Server::part_from_channel(Client &client, std::string token)
 
 int Server::check_if_client_inside_channel(Client &client, std::string token)
 {
-	for (int i = 0; i < _channels.size(); i++)
+	for (unsigned long i = 0; i < _channels.size(); i++)
 	{
 		if (_channels[i].get_name() == token)
 		{
@@ -38,8 +38,7 @@ void Server::part_command(Client &client, std::string buffer, int &clientSocket)
 {
 	char *str;
 	char *str2;
-	int i = 0;
-	int flag = 0;
+	unsigned long i = 0;
 	std::string reason;
 	std::string response;
 	int bytes_sent;

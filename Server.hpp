@@ -27,10 +27,8 @@ private:
 	struct pollfd *_pollFds;
 	std::map<int, Client> _clients;
 	std::vector<Channel> _channels;
-	std::vector<std::string> _clients_oper;
-	std::string oper_username;
-	std::string oper_password;
 	void (*ptr)(int);
+
 
 public:
 	Server(std::string password, int port);
@@ -41,7 +39,7 @@ public:
 	std::string getServerName();
 	int requiredParams(Client &client);
 	void params_requirements(Client &client, int &clientSocket);
-	void executeAll(Client &client, std::string buffer, int &clientSocket, std::string _password);
+	void executeAll(Client &client, std::string buffer, int &clientSocket);
 	void initClient();
 	int CreateSocketConnection();
 	int indexClient();

@@ -2,7 +2,7 @@
 
 void Server::add_channel_to_client(Client &client, std::string to_check)
 {
-	for (int i = 0; i < _channels.size(); i++)
+	for (unsigned long i = 0; i < _channels.size(); i++)
 	{
 		if (_channels[i].get_name() == to_check)
 		{
@@ -14,8 +14,7 @@ void Server::add_channel_to_client(Client &client, std::string to_check)
 
 void Server::add_client_to_channel(Client &client, std::string to_check)
 {
-	int a;
-	for (int i = 0; i < _channels.size(); i++)
+	for (unsigned long i = 0; i < _channels.size(); i++)
 	{
 		if (_channels[i].get_name() == to_check)
 		{
@@ -27,7 +26,7 @@ void Server::add_client_to_channel(Client &client, std::string to_check)
 
 int Server::check_if_client_already_joined(Client &client, std::string token)
 {
-	for (int i = 0; i < _channels.size(); i++)
+	for (unsigned long i = 0; i < _channels.size(); i++)
 	{
 		if (token == _channels[i].get_name())
 		{
@@ -42,7 +41,7 @@ int Server::check_if_client_already_joined(Client &client, std::string token)
 ch_modes Server::get_modes(std::string channel_name)
 {
 	ch_modes ch;
-	for (int i = 0; i < _channels.size(); i++)
+	for (unsigned long i = 0; i < _channels.size(); i++)
 	{
 		if (channel_name == _channels[i].get_name())
 		{
@@ -55,7 +54,7 @@ ch_modes Server::get_modes(std::string channel_name)
 
 int Server::not_reach_limit(std::string channel_name)
 {
-	for (int i = 0; i < _channels.size(); i++)
+	for (unsigned long i = 0; i < _channels.size(); i++)
 	{
 		if (channel_name == _channels[i].get_name())
 		{
@@ -69,7 +68,7 @@ int Server::not_reach_limit(std::string channel_name)
 
 int Server::check_password(std::string channel_name, std::string channel_password)
 {
-	for (int i = 0; i < _channels.size(); i++)
+	for (unsigned long i = 0; i < _channels.size(); i++)
 	{
 		if (channel_name == _channels[i].get_name())
 		{
@@ -85,8 +84,7 @@ void Server::join_command(Client &client, std::string command, int &clientSocket
 {
 	char *str;
 	char *str2;
-	int i = 0;
-	int flag = 0;
+	unsigned long i = 0;
 	std::vector<char *> tokens;
 	std::vector<char *> tokens2;
 	std::map<int, Client>::iterator iter1;

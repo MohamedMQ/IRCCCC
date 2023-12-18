@@ -6,7 +6,7 @@
 /*   By: mmaqbour <mmaqbour@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/20 15:31:12 by rennacir          #+#    #+#             */
-/*   Updated: 2023/12/11 16:43:58 by mmaqbour         ###   ########.fr       */
+/*   Updated: 2023/12/18 10:44:33 by mmaqbour         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,7 +82,7 @@ void Client::set_is_invited(std::string channel_name)
 
 int Client::get_is_invited(std::string channel_name)
 {
-	for (int i = 0; i < this->is_invited.size(); i++)
+	for (unsigned long i = 0; i < this->is_invited.size(); i++)
 	{
 		if (is_invited[i] == channel_name)
 			return 1;
@@ -153,14 +153,14 @@ std::string Client::get_real_name()
 void Client::set_private_message(std::string username, std::string message)
 {
 	int flag = 0;
-	for (int i = 0; i < this->private_messages.size(); i++)
+	for (unsigned long i = 0; i < this->private_messages.size(); i++)
 	{
 		if (this->private_messages[i].user == username)
 			flag = 1337;
 	}
 	if (flag == 1337)
 	{
-		for (int i = 0; i < this->private_messages.size(); i++)
+		for (unsigned long i = 0; i < this->private_messages.size(); i++)
 		{
 			if (this->private_messages[i].user == username)
 			{

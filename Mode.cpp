@@ -2,7 +2,7 @@
 
 void Server::set_channel_psw_and_mode(std::string token, std::string password, int flag)
 {
-	for (int i = 0; i < _channels.size(); i++)
+	for (unsigned long i = 0; i < _channels.size(); i++)
 	{
 		if (token == _channels[i].get_name())
 		{
@@ -18,7 +18,7 @@ void Server::set_channel_psw_and_mode(std::string token, std::string password, i
 
 int Server::get_limit_num(std::string channel_name)
 {
-	for (int i = 0; i < _channels.size(); i++)
+	for (unsigned long i = 0; i < _channels.size(); i++)
 	{
 		if (channel_name == _channels[i].get_name())
 		{
@@ -54,7 +54,7 @@ void Server::change_client_mode_o(std::string client_name, std::string channel_n
 	{
 		if (client_name == (*iter).second.get_nickname())
 		{
-			for (int j = 0; j < _channels.size(); j++)
+			for (unsigned long j = 0; j < _channels.size(); j++)
 			{
 				if (_channels[j].get_name() == channel_name)
 				{
@@ -69,7 +69,7 @@ void Server::change_client_mode_o(std::string client_name, std::string channel_n
 
 void Server::set_channel_mode(std::string token, char mode, int flag)
 {
-	for (int i = 0; i < _channels.size(); i++)
+	for (unsigned long i = 0; i < _channels.size(); i++)
 	{
 		if (_channels[i].get_name() == token)
 		{
@@ -83,7 +83,7 @@ void Server::print_modes(std::string channel_name)
 {
 	ch_modes ch;
 
-	for (int i = 0; i < _channels.size(); i++)
+	for (unsigned long i = 0; i < _channels.size(); i++)
 	{
 		if (_channels[i].get_name() == channel_name)
 		{
@@ -97,7 +97,7 @@ int Server::set_limit(std::string channel_name, std::string sett)
 {
 	long long a;
 
-	for (int i = 0; i < _channels.size(); i++)
+	for (unsigned long i = 0; i < _channels.size(); i++)
 	{
 		if (_channels[i].get_name() == channel_name)
 		{
@@ -113,7 +113,7 @@ int Server::set_limit(std::string channel_name, std::string sett)
 
 int Server::check_channel_pass(std::string channel_name, std::string password)
 {
-	for (int i = 0; i < _channels.size(); i++)
+	for (unsigned long i = 0; i < _channels.size(); i++)
 	{
 		if (_channels[i].get_name() == channel_name)
 		{
@@ -141,7 +141,7 @@ std::vector<std::string> Server::split_options(std::string to_split)
 {
 	std::vector<std::string> options;
 	std::string tok;
-	int i = 0;
+	unsigned long i = 0;
 	char sign;
 	if (to_split[0] == '+') {
 		sign = '+';
@@ -169,7 +169,7 @@ std::vector<std::string> Server::get_arguments(std::vector<char *> tokens)
 {
 	std::vector<std::string> vec;
 
-	for (int i = 2; i < tokens.size(); i++)
+	for (unsigned long i = 2; i < tokens.size(); i++)
 		vec.push_back(tokens[i]);
 	return vec;
 }
@@ -180,11 +180,11 @@ void Server::mode_command(Client &client, std::string buffer, int &clientSocket)
 	std::string response;
 	int bytes_sent;
 	std::string password;
-	int args_count = 0;
+	unsigned long args_count = 0;
 	std::vector<std::string> options;
 	std::vector<std::string> arguments;
 	std::string limit;
-	const char *modes = buffer.c_str();
+	// const char *modes = buffer.c_str();
 	std::vector<char *> tokens;
 	std::string clientIP(client.getClientIP());
 
@@ -219,7 +219,7 @@ void Server::mode_command(Client &client, std::string buffer, int &clientSocket)
 		{
 			options = split_options(tokens[1]);
 			arguments = get_arguments(tokens);
-			for (int p = 0; p < options.size(); p++)
+			for (unsigned long p = 0; p < options.size(); p++)
 			{
 				if (!std::strcmp(options[p].c_str(), "+k") || !std::strcmp(options[p].c_str(), "+o") || !std::strcmp(options[p].c_str(), "+l")
 					|| !std::strcmp(options[p].c_str(), "k") || !std::strcmp(options[p].c_str(), "o") || !std::strcmp(options[p].c_str(), "l"))

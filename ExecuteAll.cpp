@@ -33,11 +33,12 @@ void Server::fill_client(std::string command, Client &client, int flag)
 	}
 }
 
-void Server::executeAll(Client &client, std::string buffer, int &clientSocket, std::string _password)
+void Server::executeAll(Client &client, std::string buffer, int &clientSocket)
 {
 	std::string buffer_temp = buffer;
 	char *str;
 	std::vector<std::string> tokens;
+	int bytes_sent;
 	str = strtok((char *)(buffer.c_str()), " ");
 	while (str != NULL)
 	{
@@ -75,6 +76,6 @@ void Server::executeAll(Client &client, std::string buffer, int &clientSocket, s
 	else
 	{
 		std::string response = ":" + this->getServerName() + " 421 " + client.get_nickname() + tokens[0] + " :Unknown command\r\n";
-		int bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+		bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 	}
 }

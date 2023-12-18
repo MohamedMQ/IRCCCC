@@ -2,8 +2,7 @@
 
 void Server::add_channel_to_invited(std::string client_name, std::string channel_name)
 {
-	int i = 0;
-	int j = 0;
+	unsigned long i = 0;
 	std::map<int, Client>::iterator iter;
 
 	for (i = 0; i < _channels.size(); i++)
@@ -21,7 +20,7 @@ void Server::add_channel_to_invited(std::string client_name, std::string channel
 
 int Server::check_client_is_op(Client &client, std::string channel_name)
 {
-	for (int i = 0; i < _channels.size(); i++)
+	for (unsigned long i = 0; i < _channels.size(); i++)
 	{
 		if (_channels[i].get_name() == channel_name)
 		{
@@ -34,7 +33,7 @@ int Server::check_client_is_op(Client &client, std::string channel_name)
 
 int Server::check_invite_only_channel(std::string token)
 {
-	for (int i = 0; i < _channels.size(); i++)
+	for (unsigned long i = 0; i < _channels.size(); i++)
 	{
 		if (_channels[i].get_name() == token)
 		{

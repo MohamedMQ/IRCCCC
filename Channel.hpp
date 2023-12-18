@@ -6,12 +6,13 @@
 /*   By: mmaqbour <mmaqbour@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/20 15:33:51 by rennacir          #+#    #+#             */
-/*   Updated: 2023/12/11 11:42:03 by mmaqbour         ###   ########.fr       */
+/*   Updated: 2023/12/18 12:05:51 by mmaqbour         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef CHANNEL_H
 #define  CHANNEL_H
+
 
 #include "irc.hpp"
 #include "Client.hpp"

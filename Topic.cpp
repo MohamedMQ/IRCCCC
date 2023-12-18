@@ -2,7 +2,7 @@
 
 void Server::set_topic(std::string channel_name, std::string topic, std::string client_nickname)
 {
-	for (int i = 0; i < _channels.size(); i++)
+	for (unsigned long i = 0; i < _channels.size(); i++)
 	{
 		if (_channels[i].get_name() == channel_name)
 		{
@@ -17,7 +17,7 @@ void Server::print_topic(std::string token, Client &client, int &clientSocket)
 	std::string response;
 	int bytes_sent;
 
-	for (int i = 0; i < _channels.size(); i++)
+	for (unsigned long i = 0; i < _channels.size(); i++)
 	{
 		if (_channels[i].get_name() == token)
 		{

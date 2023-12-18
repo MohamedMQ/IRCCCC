@@ -6,7 +6,7 @@ int Server::pars_user_command(std::string command, int &flag, Client &client, in
 	std::string real_name;
 	int bytes_sent;
 	int pos;
-	int i;
+	unsigned long i;
 
 	std::vector<std::string> tokens;
 	char *str;

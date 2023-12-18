@@ -3,8 +3,10 @@
 Server server("", 0);
 void signal_handler(int sig)
 {
-	server.eraseAllClients();
-	exit(0);
+	if (sig == SIGINT) {
+		server.eraseAllClients();
+		exit(0);
+	}
 }
 
 int passwordHandler(char *pass) {
@@ -16,7 +18,7 @@ int passwordHandler(char *pass) {
 
 	if (password.size() < 8 || password.size() > 20)
 		return 0;
-	for (int i = 0; i < password.size(); i++) {
+	for (unsigned long i = 0; i < password.size(); i++) {
 		if (!UpperCase && (password[i] >= 'A' && password[i] <= 'Z'))
 			UpperCase++;
 		else if (!LowerCase && (password[i] >= 'a' && password[i] <= 'z'))

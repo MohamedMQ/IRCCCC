@@ -2,6 +2,7 @@
 
 int Server::quit_command(int &socket, std::string command)
 {
+	(void)command;
 	close(socket);
 	_clients.erase(socket);
 	socket = -1;
