@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmaqbour <mmaqbour@student.42.fr>          +#+  +:+       +#+        */
+/*   By: rennacir <rennacir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/20 15:22:02 by rennacir          #+#    #+#             */
-/*   Updated: 2023/12/18 12:45:25 by mmaqbour         ###   ########.fr       */
+/*   Updated: 2023/12/18 15:46:53 by rennacir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,8 +14,19 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
-#include "irc.hpp"
 #include "Channel.hpp"
+#include <cstdlib>
+#include <cstring>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <fcntl.h>
+#include <poll.h>
+#include <iostream>
+#include <map>
+#include <vector>
+#include "Channel.hpp"
+#include "Client.hpp"
 
 typedef struct privmsg{
 	std::string user;

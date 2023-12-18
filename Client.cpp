@@ -3,14 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmaqbour <mmaqbour@student.42.fr>          +#+  +:+       +#+        */
+/*   By: rennacir <rennacir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/20 15:31:12 by rennacir          #+#    #+#             */
-/*   Updated: 2023/12/18 10:44:33 by mmaqbour         ###   ########.fr       */
+/*   Updated: 2023/12/18 15:47:26 by rennacir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "irc.hpp"
+#include "Client.hpp"
 #include "Client.hpp"
 
 Client::Client()
