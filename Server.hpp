@@ -74,7 +74,6 @@ public:
 	int check_new_already_join(std::string token, std::string channel_name);
 	void change_client_mode_o(std::string client_name, std::string channel_name, int flag);
 	void set_channel_mode(std::string token, char mode, int flag);
-	void print_modes(std::string channel_name);
 	int set_limit(std::string channel_name, std::string sett);
 	int check_channel_pass(std::string channel_name, std::string password);
 	int check_if_name_client_is_op(std::string client_name, std::string channel_name);

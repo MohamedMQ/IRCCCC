@@ -79,20 +79,6 @@ void Server::set_channel_mode(std::string token, char mode, int flag)
 	}
 }
 
-void Server::print_modes(std::string channel_name)
-{
-	ch_modes ch;
-
-	for (unsigned long i = 0; i < _channels.size(); i++)
-	{
-		if (_channels[i].get_name() == channel_name)
-		{
-			ch = _channels[i].get_modes();
-			std::cout << "i :" << ch.i << " t :" << ch.t << " k :" << ch.k << " l :" << ch.l << " o :" << ch.o << std::endl;
-		}
-	}
-}
-
 int Server::set_limit(std::string channel_name, std::string sett)
 {
 	long long a;
@@ -215,7 +201,7 @@ void Server::mode_command(Client &client, std::string buffer, int &clientSocket)
 			return;
 		}
 		ch_modes ch = get_modes(tokens[0]);
-		if (check_channel_if_exist(tokens[0]) && check_client_is_op(client, tokens[0]) && check_if_client_already_joined(client, tokens[0]))
+		if (check_channel_if_exist(tokens[0]) && check_if_client_already_joined(client, tokens[0]) && check_client_is_op(client, tokens[0]))
 		{
 			options = split_options(tokens[1]);
 			arguments = get_arguments(tokens);

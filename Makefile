@@ -1,15 +1,3 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    Makefile                                           :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: mmaqbour <mmaqbour@student.42.fr>          +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2023/11/23 15:58:10 by rennacir          #+#    #+#              #
-#    Updated: 2023/12/18 12:44:46 by mmaqbour         ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
-
 FLAGS 				= -std=c++98 -Wall -Werror -Wextra
 NAME 				= ircserv
 NAME_BONUS 			= bot
@@ -42,7 +30,7 @@ $(OBJ_DIR):
 	@echo "\033[1;32m====> COMPILING :\n\r\033[0m"
 
 bonus: $(NAME_BONUS)
-	
+
 $(NAME_BONUS): $(OBJ_DIR_BONUS) $(OBJECT_FILES_BONUS)
 	@$(CC) $(FLAGS) $(OBJECT_FILES_BONUS) -o $(NAME_BONUS)
 	@printf "\033[1;32m\n\n====> DONE\n\033[0m"
