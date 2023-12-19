@@ -201,8 +201,33 @@ void signal_handler(int sig) {
 	exit(1);
 }
 
+int pars_ip(std::string str)
+{
+	char *str2;
+	int count = 0;
+	std::string temp_str = str;
+	std::vector<char *> tokens;
+	str2 = strtok((char *)str.c_str(), ".");
+	while (str2 != NULL)
+	{
+		tokens.push_back(str2);
+		str2 = strtok(NULL, ".");
+	}
+	for (size_t i = 0; i < temp_str.size() ; i++)
+	{
+		if (temp_str[i] == '.')
+			count++;
+	}
+	if (tokens.size() != 4 || count != 3)
+	{
+		std::cerr << "Error about the IP address" << std::endl;
+		return 0;
+	}
+	return 1;
+}
+
 int main(int ac, char **av) {
-	if (ac == 2)
+	if (ac == 4)
 	{
 		std::string _saveSemiCommands;
 		struct sockaddr_in serverAddr;
@@ -216,12 +241,21 @@ int main(int ac, char **av) {
 		clientSocket = socket(AF_INET, SOCK_STREAM, 0);
 		serverAddr.sin_family = AF_INET;
 		serverAddr.sin_port = htons(atol(av[1]));
-		serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+		if (!pars_ip(av[3]))
+			return 1;
+		serverAddr.sin_addr.s_addr = inet_addr(av[3]);
 		if (connect(clientSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == -1) {
 			std::cout << "Error\nfailed connecting to the server\n";
 			exit (-1);
 		} else
+		{
 			std::cout << "Success\nsuccessed connecting to the server\n";
+			std::string password(av[2]);
+			std::string pass_resp = "PASS " + password + "\r\n";
+			send(clientSocket, pass_resp.c_str(), pass_resp.size(), 0);
+			send(clientSocket, "NICK BOT\r\n", strlen("NICK BOT\r\n"), 0);
+			send(clientSocket, "USER BOT 0 * BOT\r\n", strlen("USER BOT 0 * BOT\r\n"), 0);
+		}
 		flag = fcntl(clientSocket, F_GETFL, 0);
 		fcntl(clientSocket, F_SETFL, flag | O_NONBLOCK);
 		_pollFd = new struct pollfd;

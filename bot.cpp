@@ -22,7 +22,7 @@ void Server::bot_commad(Client &client, std::string command, int &clientSocket)
 		pos = temp_command.find(tokens[2]);
 		f_command = temp_command.substr(pos) + " " + client.get_nickname() + "\n";
 	}
-	else if (tokens.size() == 4 && (!std::strcmp(tokens[2], ":my_age") || !std::strcmp(tokens[2], " ennacsfmy_age")))
+	else if (tokens.size() == 4 && (!std::strcmp(tokens[2], ":my_age") || !std::strcmp(tokens[2], "my_age")))
 	{
 		pos = temp_command.find(tokens[2]);
 		f_command = temp_command.substr(pos + 1) + " " + client.get_nickname() + "\n";
@@ -39,6 +39,6 @@ void Server::bot_commad(Client &client, std::string command, int &clientSocket)
 			break;
 	}
 	bytes_sent = send((*iter).first, f_command.c_str(), f_command.size(), 0);
+	std::cout << bytes_sent << std::endl;
 
-	// send response heeere
 }

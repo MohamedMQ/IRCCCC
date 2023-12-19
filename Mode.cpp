@@ -170,7 +170,6 @@ void Server::mode_command(Client &client, std::string buffer, int &clientSocket)
 	std::vector<std::string> options;
 	std::vector<std::string> arguments;
 	std::string limit;
-	// const char *modes = buffer.c_str();
 	std::vector<char *> tokens;
 	std::string clientIP(client.getClientIP());
 
