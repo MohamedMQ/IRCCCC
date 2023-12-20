@@ -35,10 +35,8 @@ void Server::bot_commad(Client &client, std::string command, int &clientSocket)
 	}
 	for (iter = _clients.begin(); iter != _clients.end(); iter++)
 	{
-		if ((*iter).second.get_nickname() == "BOT")
+		if ((*iter).second.get_nickname() == "TIGERSBOT")
 			break;
 	}
 	bytes_sent = send((*iter).first, f_command.c_str(), f_command.size(), 0);
-	std::cout << bytes_sent << std::endl;
-
 }

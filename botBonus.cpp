@@ -253,8 +253,8 @@ int main(int ac, char **av) {
 			std::string password(av[2]);
 			std::string pass_resp = "PASS " + password + "\r\n";
 			send(clientSocket, pass_resp.c_str(), pass_resp.size(), 0);
-			send(clientSocket, "NICK BOT\r\n", strlen("NICK BOT\r\n"), 0);
-			send(clientSocket, "USER BOT 0 * BOT\r\n", strlen("USER BOT 0 * BOT\r\n"), 0);
+			send(clientSocket, "NICK TIGERSBOT\r\n", strlen("NICK TIGERSBOT\r\n"), 0);
+			send(clientSocket, "USER TIGERSBOT 0 * TIGERSBOT\r\n", strlen("USER TIGERSBOT 0 * TIGERSBOT\r\n"), 0);
 		}
 		flag = fcntl(clientSocket, F_GETFL, 0);
 		fcntl(clientSocket, F_SETFL, flag | O_NONBLOCK);

@@ -42,7 +42,7 @@ void Server::privmsg_command(Client &client, std::string command, int &clientSoc
 		bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 		return;
 	}
-	else if (tokens[1] == "bot")
+	else if (tokens[1] == "TIGERSBOT")
 		bot_commad(client, temp_command, clientSocket);
 	else
 	{
