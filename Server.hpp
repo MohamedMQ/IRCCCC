@@ -88,6 +88,7 @@ public:
 	void kick_command(Client &client, std::string command, int &clientSocket);
 	void bot_commad(Client &client, std::string command, int &clientSocket);
 	void eraseAllClients();
+	int positif_okl_options(Client &client, int &clientSocket, const char *options_p, unsigned long *count_args, std::vector<char *> tokens);
 
 };
 

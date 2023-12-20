@@ -16,6 +16,12 @@
 
 int clientSocket;
 
+typedef struct date {
+	int day;
+	int month;
+	int year;
+} date;
+
 int check_is_int(char *limit) {
 	int i;
 
@@ -28,27 +34,46 @@ int check_is_int(char *limit) {
 	return 1;
 }
 
-std::vector<int> count_age(int actual_day, int actual_mounth, int actual_year,int birthday, int birth_mounth, int birth_year) {
+std::vector<int> count_age(date actual_date, date birthday_date) {
 	int day;
 	int mounth;
 	int year;
 	int mounts[] = {31,28,31,30,31,30,31,31,30,31,30,31};
 	std::vector<int> ints;
-	if (birthday > mounts[birth_mounth - 1]) {
+	if (birthday_date.year % 4 == 0)
+		mounts[1] = 29;
+	if ( birthday_date.day > mounts[birthday_date.month - 1]) {
 		ints.push_back(-1337);
 		return ints;
 	}
-	year = actual_year - birth_year;
-	if (actual_mounth < birth_mounth) {
-		mounth = 12 - (birth_mounth - actual_mounth);
+	year = actual_date.year - birthday_date.year;
+	if (actual_date.month <= birthday_date.month) {
+		mounth = 12 - (birthday_date.month - actual_date.month);
 		year--;
 	} else
-		mounth = actual_mounth - birth_mounth;
-	if (actual_day < birthday) {
-		day = mounts[actual_mounth - 1] - (birthday - actual_day);
+		mounth = actual_date.month - birthday_date.month;
+	if (actual_date.day <= birthday_date.day) {
+		int t = mounts[birthday_date.month - 1];
+		if (mounts[birthday_date.month - 1] == 28)
+			t += 2;
+		else if (mounts[birthday_date.month - 1] == 29)
+			t += 1;
+		day = t - (birthday_date.day - actual_date.day);
 		mounth--;
-	} else
-		day = actual_day - birthday;
+	}
+	else
+		day = actual_date.day - birthday_date.day;
+	if (mounth == 11 && day == mounts[actual_date.month - 1])
+	{
+		year++;
+		day = 0;
+		mounth = 0;
+	}
+	if (mounth == 12)
+	{
+		year++;
+		mounth = 0;
+	}
 	ints.push_back(day);
 	ints.push_back(mounth);
 	ints.push_back(year);
@@ -72,6 +97,8 @@ void age_bot(char *birth_date, std::string client_name, int &clientSocket) {
 	int actual_mounth;
 	int actual_day;
 	int actual_year;
+	date actual_date;
+	date birthday_date;
 	std::string mounts[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 	std::vector<char *> tokens;
 	time_t now = time(0);
@@ -98,13 +125,18 @@ void age_bot(char *birth_date, std::string client_name, int &clientSocket) {
 		bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 		return;
 	}
-	ints = count_age(actual_day, actual_mounth, actual_year, atoi(tokens[0]), atoi(tokens[1]), atoi(tokens[2]));
-	if (ints[0] > 0) {
-		response = "PRIVMSG " + client_name + " :your age is : " + std::to_string(ints[2]) + " years " + std::to_string(ints[1]) 
-					+ " months " + std::to_string(ints[0]) + " days\r\n";
+	actual_date.day = actual_day;
+	actual_date.month = actual_mounth;
+	actual_date.year = actual_year;
+	birthday_date.day = atoi(tokens[0]);
+	birthday_date.month = atoi(tokens[1]);
+	birthday_date.year = atoi(tokens[2]);
+	ints = count_age(actual_date, birthday_date);
+	if (ints[0] >= 0) {
+		response = "PRIVMSG " + client_name + " :your age is : " + std::to_string(ints[2]) + " years " + std::to_string(ints[1]) + " months " + std::to_string(ints[0]) + " days\r\n";
 		bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 	} else {
-		response = "PRIVMSG " + client_name + " " + "Invalid day" +  " \r\n";
+		response = "PRIVMSG " + client_name + " " + "Invalid day(Seriously!!!)" +  " \r\n";
 		bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 		return;
 	}
@@ -143,8 +175,8 @@ void nickname_bot(std::string client_name, int &clientSocket) {
 		if (i < 9)
 			nicknames += " , ";
 	}
-		response = "PRIVMSG " + client_name + " " + nicknames +  " \r\n";
-		bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+	response = "PRIVMSG " + client_name + " " + nicknames +  " \r\n";
+	bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 }
 
 std::vector<int> pars_bot_command(std::string command, int &clientSocket) {

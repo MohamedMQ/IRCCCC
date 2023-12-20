@@ -1,64 +1,51 @@
 #include "Server.hpp"
 
 
-int Server::getClientsNumber()
-{
+int Server::getClientsNumber() {
 	return _clientsNumber;
 }
 
-void Server::setPassword(std::string pass)
-{
+void Server::setPassword(std::string pass) {
 	_password = pass;
 }
 
-void Server::setPortNumber(int port)
-{
+void Server::setPortNumber(int port) {
 	_portNumber = port;
 }
 
-void Server::setServerSocket(int socket)
-{
+void Server::setServerSocket(int socket) {
 	_serverSocket = socket;
 }
 
-std::string Server::getServerName()
-{
+std::string Server::getServerName() {
 	return _serverName;
 }
 
-int Server::requiredParams(Client &client)
-{
+int Server::requiredParams(Client &client) {
 	if (client.get_is_userF() && client.get_is_nickF() && client.get_is_passF())
 		return (1);
 	else
 		return (0);
 }
 
-void Server::params_requirements(Client &client, int &clientSocket)
-{
+void Server::params_requirements(Client &client, int &clientSocket) {
 	std::string response;
 	int bytes_read;
 
-	if (!client.get_is_passF())
-	{
+	if (!client.get_is_passF()) {
 		std::string response = ":" + this->getServerName() + " 464 " + client.get_nickname() + " :You must identify with a password before running commands\r\n";
 		bytes_read = send(clientSocket, response.c_str(), response.size(), 0);
-	}
-	else if (!client.get_is_nickF())
-	{
+	} else if (!client.get_is_nickF()) {
 		std::string response = ":" + this->getServerName() + " 431 " + client.get_nickname() + " :No nickname given. Use NICK command to set your nickname\r\n";
 		bytes_read = send(clientSocket, response.c_str(), response.size(), 0);
-	}
-	else
-	{
+	} else {
 		std::string response = ":" + this->getServerName() + " 451 * :No username given. Use USER command to set your username\r\n";
 		bytes_read = send(clientSocket, response.c_str(), response.size(), 0);
 	}
 }
 
-Server::Server(std::string pwd, int port)
-{
-	_password = pwd;
+Server::Server(std::string password, int port) {
+	_password = password;
 	_portNumber = port;
 	_clientsNumber = 50;
 	_connectedClients = 0;
@@ -77,8 +64,7 @@ int Server::createServerSocket()
 
 	agree = 1;
 	serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-	if (serverSocket < 0)
-	{
+	if (serverSocket < 0) {
 		std::cerr << "Error/ninitializing the socket\n";
 		return -1;
 	}
@@ -97,12 +83,10 @@ int Server::createServerSocket()
 	return serverSocket;
 }
 
-void Server::setUpAllFds()
-{
+void Server::setUpAllFds() {
 	int j = 0;
 
-	while (j < _clientsNumber)
-	{
+	while (j < _clientsNumber) {
 		_fds[j].fd = 0;
 		_fds[j].events = POLLIN;
 		_fds[j].revents = 0;
@@ -110,8 +94,7 @@ void Server::setUpAllFds()
 	}
 }
 
-int Server::getFreeAvailableFd()
-{
+int Server::getFreeAvailableFd() {
 	int j;
 
 	j = 1;
@@ -129,8 +112,7 @@ int Server::getFreeAvailableFd()
 	return j;
 }
 
-void Server::startServer()
-{
+void Server::startServer() {
 	int clientSocket;
 	char buf[1024];
 	int flag;
@@ -146,24 +128,20 @@ void Server::startServer()
 	res = 0;
 	i = 1;
 	std::cout << "Server is running on port " << _portNumber << std::endl;
-	while (1)
-	{
+	while (1) {
 		res = poll(_fds, _clientsNumber, -1);
-		if (res == -1)
-		{
+		if (res == -1) {
 			std::cout << "Error\npoll failed\n";
 			return;
 		}
-		if (_fds[0].revents & POLLIN)
-		{
+		if (_fds[0].revents & POLLIN) {
 			struct sockaddr_in addr;
 			char clientIP[INET_ADDRSTRLEN];
 			socklen_t len;
 
 			len = sizeof(addr);
 			clientSocket = accept(_serverSocket, (struct sockaddr *)&addr, &len);
-			if (clientSocket < 0)
-			{
+			if (clientSocket < 0) {
 				std::cout << "Error\naccepting the client socket failed\n";
 				if (errno == EAGAIN || errno == EWOULDBLOCK)
 					continue;
@@ -181,42 +159,33 @@ void Server::startServer()
 			int flag = fcntl(_fds[i].fd, F_GETFL, 0);
 			fcntl(_fds[i].fd, F_SETFL, flag | O_NONBLOCK);
 		}
-		for (long unsigned j = 1; j <= _clients.size(); j++)
-		{
+		for (long unsigned j = 1; j <= _clients.size(); j++) {
 			if (_fds[j].fd == -1)
 				continue;
-			if (_fds[j].revents & POLLIN)
-			{
+			if (_fds[j].revents & POLLIN) {
 				memset(buf, 0, sizeof(buf));
 				res = recv(_fds[j].fd, buf, sizeof(buf), 0);
-				if (res == -1)
-				{
+				if (res == -1) {
 					std::cout << "Error\nrecv failed: " << res << std::endl;
 					if (errno == EAGAIN || errno == EWOULDBLOCK)
 						continue;
 					else
 						return;
-				}
-				else if (res == 0)
-				{
+				} else if (res == 0) {
 					std::cout << "Client " << _fds[j].fd << " disconnected from the server\n";
 					_commands.erase(_fds[j].fd);
 					_clients.erase(_fds[j].fd);
 					close(_fds[j].fd);
 					_fds[j].fd = -1;
 					continue;
-				}
-				else
-				{
+				} else {
 					std::string responseData(buf, res);
 					std::string &commands = _commands[_fds[j].fd];
 					commands += responseData;
 
-					if (!commands.empty())
-					{
+					if (!commands.empty()) {
 						size_t posNL = commands.find('\n');
-						while (posNL != std::string::npos)
-						{
+						while (posNL != std::string::npos) {
 							_command = commands.substr(0, posNL);
 							commands = commands.substr(posNL + 1);
 							posNL = commands.find('\n');
@@ -235,11 +204,9 @@ void Server::startServer()
 	}
 }
 
-void Server::eraseAllClients()
-{
+void Server::eraseAllClients() {
 	_channels.clear();
-	for (long unsigned int j = 1; j <= _clients.size(); j++)
-	{
+	for (long unsigned int j = 1; j <= _clients.size(); j++) {
 		if (_fds[j].fd != -1 && _fds[j].fd != 0)
 			close(_fds[j].fd);
 	}

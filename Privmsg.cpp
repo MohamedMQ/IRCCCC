@@ -65,7 +65,7 @@ void Server::privmsg_command(Client &client, std::string command, int &clientSoc
 					else
 						message = temp_command.substr(pos);
 					for (iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
-						if ((*iter2).second.get_nickname() == tokens[1]) 
+						if ((*iter2).second.get_nickname() == tokens[1])
 							break;
 					}
 					res = ":" + client.get_nickname() + "!" + client.get_username() + "@" + clientIP + " PRIVMSG " + tokens[1] + " :" + message + "\r\n";
