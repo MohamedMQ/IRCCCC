@@ -1,8 +1,7 @@
 #include "Server.hpp"
 
 Server server("", 0);
-void signal_handler(int sig)
-{
+void signal_handler(int sig) {
 	if (sig == SIGINT) {
 		server.eraseAllClients();
 		exit(0);
@@ -37,8 +36,7 @@ int passwordHandler(char *pass) {
 	return 1;
 }
 
-int main(int ac, char **av)
-{
+int main(int ac, char **av) {
 	int socket;
 	signal(SIGINT, signal_handler);
 
@@ -52,15 +50,14 @@ At least an uppercase character\nAt least a lowercase character\n\
 At least a special character\n";
 		return (0);
 	}
-	server.setPass(av[2]);
-	server.setPort(std::stoi(av[1]));
-	socket = server.CreateSocketConnection();
-	if (listen(socket, server.getMaxClientsNumber()) == -1)
-	{
+	server.setPassword(av[2]);
+	server.setPortNumber(std::stoi(av[1]));
+	socket = server.createServerSocket();
+	if (listen(socket, server.getClientsNumber()) == -1) {
 		std::cerr << "Error/nlisten failed\n";
 		return (0);
 	}
-	server.setServerSock(socket);
-	server.ServerRun();
+	server.setServerSocket(socket);
+	server.startServer();
 	return (0);
 }

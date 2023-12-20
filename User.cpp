@@ -1,7 +1,6 @@
 #include "Server.hpp"
 
-int Server::pars_user_command(std::string command, int &flag, Client &client, int &clientSocket)
-{
+int Server::pars_user_command(std::string command, int &flag, Client &client, int &clientSocket) {
 	std::string response;
 	std::string real_name;
 	int bytes_sent;
@@ -12,19 +11,16 @@ int Server::pars_user_command(std::string command, int &flag, Client &client, in
 	char *str;
 	std::string temp_command = command;
 	str = strtok((char *)(command.c_str()), " ");
-	while (str != NULL)
-	{
+	while (str != NULL) {
 		tokens.push_back(str);
 		str = strtok(NULL, " ");
 	}
-	if (tokens.size() < 5)
-	{
+	if (tokens.size() < 5) {
 		response = ":" + this->getServerName() + " 461 " + client.get_nickname() + " USER :Not enough parameters\r\n";
 		bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 		return 0;
 	}
-	if (!(pars_nickname(tokens[1]) && !std::strcmp(tokens[2].c_str(), "0") && !std::strcmp(tokens[3].c_str(), "*")))
-	{
+	if (!(pars_nickname(tokens[1]) && !std::strcmp(tokens[2].c_str(), "0") && !std::strcmp(tokens[3].c_str(), "*"))) {
 		response = ":" + this->getServerName() + " 468 " + client.get_nickname() + " :Your user command is not valid\r\n";
 		bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 		_clients.erase(clientSocket);
@@ -34,16 +30,13 @@ int Server::pars_user_command(std::string command, int &flag, Client &client, in
 	}
 	pos = temp_command.find(tokens[4]);
 	real_name = temp_command.substr(pos);
-	if (real_name == ":")
-	{
+	if (real_name == ":") {
 		flag = 10;
 		return 1;
 	}
 	i = 4;
-	while (i < tokens.size())
-	{
-		if (!pars_nickname(tokens[4]))
-		{
+	while (i < tokens.size()) {
+		if (!pars_nickname(tokens[4])) {
 			flag = 10;
 			break;
 		}
@@ -94,17 +87,14 @@ void Server::user_command(std::string _command, Client &client, int &socket) {
 	int bytes_sent;
 
 	std::string clientIP(client.getClientIP());
-	if (client.get_is_userF() == 0)
-	{
+	if (client.get_is_userF() == 0) {
 		int flag = 0;
 		if (!pars_user_command(_command, flag, client, socket))
 			return;
 		fill_client(_command, client, flag);
 		welcomeMsg(client, socket);
 		client.set_is_userF(1);
-	}
-	else
-	{
+	} else {
 		response = ":" + _clients[socket].get_nickname() + " 462 " + client.get_nickname() + " :You may not reregister\r\n";
 		bytes_sent = send(socket, response.c_str(), response.size(), 0);
 	}

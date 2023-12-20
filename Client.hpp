@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rennacir <rennacir@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmaqbour <mmaqbour@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/20 15:22:02 by rennacir          #+#    #+#             */
-/*   Updated: 2023/12/18 15:46:53 by rennacir         ###   ########.fr       */
+/*   Updated: 2023/12/20 11:07:22 by mmaqbour         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,8 +34,7 @@ typedef struct privmsg{
 } privmsg;
 
 class Channel;
-class Client
-{
+class Client {
 	private:
 		std::map<std::string, bool> channels;
 		std::vector<std::string> is_invited;

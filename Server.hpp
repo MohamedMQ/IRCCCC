@@ -16,15 +16,15 @@
 class Server
 {
 private:
-	std::map<int, std::string> _saveSemiCommands;
+	std::map<int, std::string> _commands;
 	std::string _command;
 	std::string _password;
-	int _portNumber;
-	int _serverSock;
-	int _maxClientsNumber;
+	struct pollfd *_fds;
+	int _serverSocket;
 	int _connectedClients;
+	int _portNumber;
+	int _clientsNumber;
 	std::string _serverName;
-	struct pollfd *_pollFds;
 	std::map<int, Client> _clients;
 	std::vector<Channel> _channels;
 	void (*ptr)(int);
@@ -32,18 +32,18 @@ private:
 
 public:
 	Server(std::string password, int port);
-	int getMaxClientsNumber();
-	void setPass(std::string pass);
-	void setPort(int port);
-	void setServerSock(int socket);
+	int getClientsNumber();
+	void setPassword(std::string pass);
+	void setPortNumber(int port);
+	void setServerSocket(int socket);
 	std::string getServerName();
 	int requiredParams(Client &client);
 	void params_requirements(Client &client, int &clientSocket);
-	void executeAll(Client &client, std::string buffer, int &clientSocket);
-	void initClient();
-	int CreateSocketConnection();
-	int indexClient();
-	void ServerRun();
+	void executeAllCommands(Client &client, std::string buffer, int &clientSocket);
+	void setUpAllFds();
+	int createServerSocket();
+	int getFreeAvailableFd();
+	void startServer();
 	void fill_client(std::string command, Client &client, int flag);
 	void user_command(std::string _command, Client &client, int &socket);
 	int quit_command(int &socket, std::string command);

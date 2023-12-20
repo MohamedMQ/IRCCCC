@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rennacir <rennacir@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmaqbour <mmaqbour@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/20 15:33:51 by rennacir          #+#    #+#             */
-/*   Updated: 2023/12/18 15:46:58 by rennacir         ###   ########.fr       */
+/*   Updated: 2023/12/20 11:05:27 by mmaqbour         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,8 +38,7 @@ typedef struct channel_modes{
 
 class Client;
 
-class Channel
-{
+class Channel {
 	private:
 		std::vector<std::string> clients;
 		std::map<std::string, std::string> messages;

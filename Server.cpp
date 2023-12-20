@@ -1,24 +1,24 @@
 #include "Server.hpp"
 
 
-int Server::getMaxClientsNumber()
+int Server::getClientsNumber()
 {
-	return _maxClientsNumber;
+	return _clientsNumber;
 }
 
-void Server::setPass(std::string pass)
+void Server::setPassword(std::string pass)
 {
 	_password = pass;
 }
 
-void Server::setPort(int port)
+void Server::setPortNumber(int port)
 {
 	_portNumber = port;
 }
 
-void Server::setServerSock(int socket)
+void Server::setServerSocket(int socket)
 {
-	_serverSock = socket;
+	_serverSocket = socket;
 }
 
 std::string Server::getServerName()
@@ -56,95 +56,112 @@ void Server::params_requirements(Client &client, int &clientSocket)
 	}
 }
 
-Server::Server(std::string password, int port)
+Server::Server(std::string pwd, int port)
 {
-	_password = password;
+	_password = pwd;
 	_portNumber = port;
-	_maxClientsNumber = 50;
+	_clientsNumber = 50;
 	_connectedClients = 0;
 	_serverName = "TIGERS";
-	_pollFds = new struct pollfd[_maxClientsNumber];
+	_fds = new struct pollfd[_clientsNumber];
 }
 
-int Server::CreateSocketConnection()
+int Server::createServerSocket()
 {
-	int yes = 1;
+	int agree;
+	int serverSocket;
+	int bindResult;
 	struct sockaddr_in addr;
 	char serverIP[INET_ADDRSTRLEN];
-	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	if (sockfd < 0)
+	sockaddr_in serverAddress;
+
+	agree = 1;
+	serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+	if (serverSocket < 0)
 	{
 		std::cerr << "Error/ninitializing the socket\n";
 		return -1;
 	}
-	setServerSock(sockfd);
-	sockaddr_in serverAddress;
+	setServerSocket(serverSocket);
 	serverAddress.sin_family = AF_INET;
 	serverAddress.sin_port = htons(_portNumber);
 	serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
-	setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
+	setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &agree, sizeof(int));
 	inet_ntop(AF_INET, &(addr.sin_addr), serverIP, INET_ADDRSTRLEN);
-	if (bind(sockfd, (sockaddr *)&serverAddress, sizeof(serverAddress)) == -1) {
+	bindResult = bind(serverSocket, (sockaddr *)&serverAddress, sizeof(serverAddress));
+	if (bindResult == -1) {
 		std::cout << "Error/nbinding with the socket failed\n";
-		close(sockfd);
+		close(serverSocket);
 		return -1;
 	}
-	return sockfd;
+	return serverSocket;
 }
 
-void Server::initClient()
+void Server::setUpAllFds()
 {
-	for (int i = 1; i < _maxClientsNumber; i++)
+	int j = 0;
+
+	while (j < _clientsNumber)
 	{
-		_pollFds[i].fd = 0;
-		_pollFds[i].events = POLLIN;
-		_pollFds[i].revents = 0;
+		_fds[j].fd = 0;
+		_fds[j].events = POLLIN;
+		_fds[j].revents = 0;
+		j++;
 	}
 }
 
-int Server::indexClient()
+int Server::getFreeAvailableFd()
 {
-	int i;
-	for (i = 1; i < _maxClientsNumber; i++)
-	{
-		if (_pollFds[i].fd == -1)
-			return i;
+	int j;
+
+	j = 1;
+	while (j < _clientsNumber) {
+		if (_fds[j].fd == -1)
+			return j;
+		j++;
 	}
-	for (i = 1; i < _maxClientsNumber; i++)
-	{
-		if (_pollFds[i].fd == 0)
+	j = 1;
+	while (j < _clientsNumber) {
+		if (_fds[j].fd == 0)
 			break;
+		j++;
 	}
-	return i;
+	return j;
 }
 
-void Server::ServerRun()
+void Server::startServer()
 {
-	initClient();
-	std::cout << "Server is running\n";
-	int flag = fcntl(_serverSock, F_GETFL, 0);
-	fcntl(_serverSock, F_SETFL, flag | O_NONBLOCK);
-	_pollFds[0].fd = _serverSock;
-	_pollFds[0].events = POLLIN;
-	_pollFds[0].revents = 0;
-	int response = 0;
-	int i = 1;
+	int clientSocket;
+	char buf[1024];
+	int flag;
+	int res;
+	int i;
+
+	setUpAllFds();
+	flag = fcntl(_serverSocket, F_GETFL, 0);
+	fcntl(_serverSocket, F_SETFL, flag | O_NONBLOCK);
+	_fds[0].fd = _serverSocket;
+	_fds[0].events = POLLIN;
+	_fds[0].revents = 0;
+	res = 0;
+	i = 1;
+	std::cout << "Server is running on port " << _portNumber << std::endl;
 	while (1)
 	{
-		response = poll(_pollFds, _maxClientsNumber, -1);
-		if (response == -1)
+		res = poll(_fds, _clientsNumber, -1);
+		if (res == -1)
 		{
 			std::cout << "Error\npoll failed\n";
 			return;
 		}
-		if (_pollFds[0].revents & POLLIN)
+		if (_fds[0].revents & POLLIN)
 		{
 			struct sockaddr_in addr;
 			char clientIP[INET_ADDRSTRLEN];
 			socklen_t len;
 
 			len = sizeof(addr);
-			int clientSocket = accept(_serverSock, (struct sockaddr *)&addr, &len);
+			clientSocket = accept(_serverSocket, (struct sockaddr *)&addr, &len);
 			if (clientSocket < 0)
 			{
 				std::cout << "Error\naccepting the client socket failed\n";
@@ -154,64 +171,62 @@ void Server::ServerRun()
 					return;
 			}
 			std::cout << "Client socket is:" << clientSocket << std::endl;
-			i = indexClient();
-			_pollFds[i].fd = clientSocket;
-			_pollFds[i].events = POLLIN;
-			_pollFds[i].revents = 0;
-			_clients.insert(std::make_pair(_pollFds[i].fd, Client()));
+			i = getFreeAvailableFd();
+			_fds[i].fd = clientSocket;
+			_fds[i].events = POLLIN;
+			_fds[i].revents = 0;
+			_clients.insert(std::make_pair(_fds[i].fd, Client()));
 			inet_ntop(AF_INET, &(addr.sin_addr), clientIP, INET_ADDRSTRLEN);
-			_clients[_pollFds[i].fd].setClientIP(clientIP);
-			int flag = fcntl(_pollFds[i].fd, F_GETFL, 0);
-			fcntl(_pollFds[i].fd, F_SETFL, flag | O_NONBLOCK);
+			_clients[_fds[i].fd].setClientIP(clientIP);
+			int flag = fcntl(_fds[i].fd, F_GETFL, 0);
+			fcntl(_fds[i].fd, F_SETFL, flag | O_NONBLOCK);
 		}
-		for (long unsigned int j = 1; j <= _clients.size(); j++)
+		for (long unsigned j = 1; j <= _clients.size(); j++)
 		{
-			if (_pollFds[j].fd == -1)
+			if (_fds[j].fd == -1)
 				continue;
-			if (_pollFds[j].revents & POLLIN)
+			if (_fds[j].revents & POLLIN)
 			{
-				char buffer[1024];
-				memset(buffer, 0, sizeof(buffer));
-				response = recv(_pollFds[j].fd, buffer, sizeof(buffer), 0);
-				if (response == -1)
+				memset(buf, 0, sizeof(buf));
+				res = recv(_fds[j].fd, buf, sizeof(buf), 0);
+				if (res == -1)
 				{
-					std::cout << "Socket fd: " << _pollFds[j].fd << " is " << j << std::endl;
-					std::cout << "Error\nrecv failed: " << response << std::endl;
+					std::cout << "Error\nrecv failed: " << res << std::endl;
 					if (errno == EAGAIN || errno == EWOULDBLOCK)
 						continue;
 					else
 						return;
 				}
-				else if (response == 0)
+				else if (res == 0)
 				{
-					std::cout << "Client " << _pollFds[j].fd << " disconnected from the server\n";
-					_saveSemiCommands.erase(_pollFds[j].fd);
-					_clients.erase(_pollFds[j].fd);
-					close(_pollFds[j].fd);
-					_pollFds[j].fd = -1;
+					std::cout << "Client " << _fds[j].fd << " disconnected from the server\n";
+					_commands.erase(_fds[j].fd);
+					_clients.erase(_fds[j].fd);
+					close(_fds[j].fd);
+					_fds[j].fd = -1;
 					continue;
 				}
 				else
 				{
-					std::string receivedData(buffer, response);
-					std::string &partialCommand = _saveSemiCommands[_pollFds[j].fd];
-					partialCommand += receivedData;
+					std::string responseData(buf, res);
+					std::string &commands = _commands[_fds[j].fd];
+					commands += responseData;
 
-					if (!partialCommand.empty())
+					if (!commands.empty())
 					{
-						size_t newlinePos = partialCommand.find('\n');
-						while (newlinePos != std::string::npos)
+						size_t posNL = commands.find('\n');
+						while (posNL != std::string::npos)
 						{
-							_command = partialCommand.substr(0, newlinePos);
-							partialCommand = partialCommand.substr(newlinePos + 1);
-							newlinePos = partialCommand.find('\n');
+							_command = commands.substr(0, posNL);
+							commands = commands.substr(posNL + 1);
+							posNL = commands.find('\n');
 							std::cout << _command << std::endl;
 							if (_command == "\0")
 								continue;
 							if (_command.find('\r') != std::string::npos)
-								executeAll(_clients[_pollFds[j].fd], _command.substr(0, _command.size() - 1), _pollFds[j].fd);
+								executeAllCommands(_clients[_fds[j].fd], _command.substr(0, _command.size() - 1), _fds[j].fd);
 							else
-								executeAll(_clients[_pollFds[j].fd], _command, _pollFds[j].fd);
+								executeAllCommands(_clients[_fds[j].fd], _command, _fds[j].fd);
 						}
 					}
 				}
@@ -225,10 +240,10 @@ void Server::eraseAllClients()
 	_channels.clear();
 	for (long unsigned int j = 1; j <= _clients.size(); j++)
 	{
-		if (_pollFds[j].fd != -1 && _pollFds[j].fd != 0)
-			close(_pollFds[j].fd);
+		if (_fds[j].fd != -1 && _fds[j].fd != 0)
+			close(_fds[j].fd);
 	}
 	_clients.clear();
-	close(_pollFds[0].fd);
+	close(_fds[0].fd);
 	exit(0);
 }
