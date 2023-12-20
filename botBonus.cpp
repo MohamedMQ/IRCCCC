@@ -16,6 +16,12 @@
 
 int clientSocket;
 
+typedef struct date {
+	int day;
+	int month;
+	int year;
+} date;
+
 int check_is_int(char *limit) {
 	int i;
 
@@ -28,33 +34,46 @@ int check_is_int(char *limit) {
 	return 1;
 }
 
-std::vector<int> count_age(int actual_day, int actual_mounth, int actual_year,int birthday, int birth_mounth, int birth_year)
-{
+std::vector<int> count_age(date actual_date, date birthday_date) {
 	int day;
 	int mounth;
 	int year;
 	int mounts[] = {31,28,31,30,31,30,31,31,30,31,30,31};
 	std::vector<int> ints;
-	if (birthday > mounts[birth_mounth - 1])
-	{
+	if (birthday_date.year % 4 == 0)
+		mounts[1] = 29;
+	if ( birthday_date.day > mounts[birthday_date.month - 1]) {
 		ints.push_back(-1337);
 		return ints;
 	}
-	year = actual_year - birth_year;
-	if (actual_mounth < birth_mounth)
-	{
-		mounth = 12 - (birth_mounth - actual_mounth);
+	year = actual_date.year - birthday_date.year;
+	if (actual_date.month <= birthday_date.month) {
+		mounth = 12 - (birthday_date.month - actual_date.month);
 		year--;
-	}
-	else
-		mounth = actual_mounth - birth_mounth;
-	if (actual_day < birthday)
-	{
-		day = mounts[actual_mounth - 1] - (birthday - actual_day);
+	} else
+		mounth = actual_date.month - birthday_date.month;
+	if (actual_date.day <= birthday_date.day) {
+		int t = mounts[birthday_date.month - 1];
+		if (mounts[birthday_date.month - 1] == 28)
+			t += 2;
+		else if (mounts[birthday_date.month - 1] == 29)
+			t += 1;
+		day = t - (birthday_date.day - actual_date.day);
 		mounth--;
 	}
 	else
-		day = actual_day - birthday;
+		day = actual_date.day - birthday_date.day;
+	if (mounth == 11 && day == mounts[actual_date.month - 1])
+	{
+		year++;
+		day = 0;
+		mounth = 0;
+	}
+	if (mounth == 12)
+	{
+		year++;
+		mounth = 0;
+	}
 	ints.push_back(day);
 	ints.push_back(mounth);
 	ints.push_back(year);
@@ -71,8 +90,7 @@ int get_mounth(std::string mounths[], std::string mounth)
 	return 0;
 }
 
-void age_bot(char *birth_date, std::string client_name, int &clientSocket)
-{
+void age_bot(char *birth_date, std::string client_name, int &clientSocket) {
 	std::vector<int> ints;
 	std::string response;
 	int bytes_sent;
@@ -81,14 +99,15 @@ void age_bot(char *birth_date, std::string client_name, int &clientSocket)
 	int actual_mounth;
 	int actual_day;
 	int actual_year;
+	date actual_date;
+	date birthday_date;
 	std::string mounts[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 	std::vector<char *> tokens;
 	time_t now = time(0);
 	char* dt = ctime(&now);
 	std::vector<std::string> tokens2;
 	str2 = strtok(dt, " ");
-	while (str2 != NULL)
-	{
+	while (str2 != NULL) {
 		tokens2.push_back(str2);
 		str2 = strtok(NULL, " ");
 	}
@@ -96,35 +115,35 @@ void age_bot(char *birth_date, std::string client_name, int &clientSocket)
 	actual_day = atoi(tokens2[2].c_str());
 	actual_year = atoi(tokens2[4].c_str());
 	str = strtok(birth_date, "-");
-	while (str != NULL)
-	{
+	while (str != NULL) {
 		tokens.push_back(str);
 		str = strtok(NULL, "-");
 	}
 	if (tokens.size() < 3 || !check_is_int(tokens[0]) || !check_is_int(tokens[1]) || !check_is_int(tokens[2])
 		|| atol(tokens[0]) < 1 || atol(tokens[0]) > 31 || atol(tokens[1]) < 1
-		|| atol(tokens[1]) > 12 || atol(tokens[2]) > actual_year)
-	{
+		|| atol(tokens[1]) > 12 || atol(tokens[2]) > actual_year) {
 		response = "PRIVMSG " + client_name + " " + "Invalid format: dd-mm-yy" +  " \r\n";
 		bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 		return;
 	}
-	ints = count_age(actual_day, actual_mounth, actual_year, atoi(tokens[0]), atoi(tokens[1]), atoi(tokens[2]));
-	if (ints[0] > 0)
-	{
+	actual_date.day = actual_day;
+	actual_date.month = actual_mounth;
+	actual_date.year = actual_year;
+	birthday_date.day = atoi(tokens[0]);
+	birthday_date.month = atoi(tokens[1]);
+	birthday_date.year = atoi(tokens[2]);
+	ints = count_age(actual_date, birthday_date);
+	if (ints[0] >= 0) {
 		response = "PRIVMSG " + client_name + " :your age is : " + std::to_string(ints[2]) + " years " + std::to_string(ints[1]) + " months " + std::to_string(ints[0]) + " days\r\n";
 		bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
-	}
-	else
-	{
-		response = "PRIVMSG " + client_name + " " + "Invalid day" +  " \r\n";
+	} else {
+		response = "PRIVMSG " + client_name + " " + "Invalid day(Seriously!!!)" +  " \r\n";
 		bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 		return;
 	}
 }
 
-void nickname_bot(std::string client_name, int &clientSocket)
-{
+void nickname_bot(std::string client_name, int &clientSocket) {
 	std::string nicknames;
 	std::string response;
 	std::string names[] = {"ali", "amir", "hamza", "rida", "mohamed", "hassan", "karim", "malik", "omar", "samir", "zayn", "akram", "bilal", "daniyal", "farid", "marwan", "qasim", "suhail", "ahmed", "aziz", "hicham", "makram", "soultan", "nabil", "adil", "anas", "badr", "habib", "hadi", "jebril", "naji", "nizar", "tarik", "zaki", "", "assem", "fouad", "haroun", "jalal", "khalid", "mustapha", "saif", "oussama", "said", "ayoub", "fakhr", "issam", "laith"};
@@ -135,17 +154,13 @@ void nickname_bot(std::string client_name, int &clientSocket)
 	int ran4;
 	response = "PRIVMSG " + client_name + " " + "Choose a unique nickname from the ones below :" +  " \r\n";
 	bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
-	for (int i = 0; i < 10; i++)
-	{
+	for (int i = 0; i < 10; i++) {
 		ran3 = std::rand() % 2;
-		if (ran3 == 0)
-		{
+		if (ran3 == 0) {
 			ran1 = std::rand() % 49;
 			ran2 = std::rand() % 49;
 			nicknames += names[ran1] + "_" + names[ran2];
-		}
-		else
-		{
+		} else {
 			ran1 = std::rand() % 49;
 			ran4 = std::rand() % 2;
 			if (ran4 == 0)
@@ -156,39 +171,32 @@ void nickname_bot(std::string client_name, int &clientSocket)
 		if (i < 9)
 			nicknames += " , ";
 	}
-		response = "PRIVMSG " + client_name + " " + nicknames +  " \r\n";
-		bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+	response = "PRIVMSG " + client_name + " " + nicknames +  " \r\n";
+	bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 }
 
-std::vector<int> pars_bot_command(std::string command, int &clientSocket)
-{
+std::vector<int> pars_bot_command(std::string command, int &clientSocket) {
 	char *str;
 	std::vector<std::string> tokens;
 	std::string response;
 	int bytes_sent;
 	std::vector<int> ints;
 	str = strtok((char *)(command.c_str()), " ");
-	while (str != NULL)
-	{
+	while (str != NULL) {
 		tokens.push_back(str);
 		str = strtok(NULL, " ");
 	}
-	if (tokens.size() >= 1)
-	{
-		if (tokens[0] == "my_age")
-		{
+	if (tokens.size() >= 1){
+		if (tokens[0] == "my_age") {
 			if (tokens.size() >= 3)
 				age_bot((char *)tokens[1].c_str(), tokens[2], clientSocket);
-			else
-			{
+			else {
 				response = "PRIVMSG " + tokens[2] + " " + "Invalid format: dd-mm-yy" +  " \r\n";
 				bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 			}
 		}
 		else if (tokens[0] == "nickname")
-		{
 			nickname_bot(tokens[1], clientSocket);
-		}
 	}
 	else
 		std::cout << "Please enter a flaag" << std::endl;
@@ -201,25 +209,21 @@ void signal_handler(int sig) {
 	exit(1);
 }
 
-int pars_ip(std::string str)
-{
+int pars_ip(std::string str) {
 	char *str2;
 	int count = 0;
 	std::string temp_str = str;
 	std::vector<char *> tokens;
 	str2 = strtok((char *)str.c_str(), ".");
-	while (str2 != NULL)
-	{
+	while (str2 != NULL) {
 		tokens.push_back(str2);
 		str2 = strtok(NULL, ".");
 	}
-	for (size_t i = 0; i < temp_str.size() ; i++)
-	{
+	for (size_t i = 0; i < temp_str.size() ; i++) {
 		if (temp_str[i] == '.')
 			count++;
 	}
-	if (tokens.size() != 4 || count != 3)
-	{
+	if (tokens.size() != 4 || count != 3) {
 		std::cerr << "Error about the IP address" << std::endl;
 		return 0;
 	}
@@ -227,8 +231,7 @@ int pars_ip(std::string str)
 }
 
 int main(int ac, char **av) {
-	if (ac == 4)
-	{
+	if (ac == 4) {
 		std::string _saveSemiCommands;
 		struct sockaddr_in serverAddr;
 		std::string _command;
@@ -247,8 +250,7 @@ int main(int ac, char **av) {
 		if (connect(clientSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == -1) {
 			std::cout << "Error\nfailed connecting to the server\n";
 			exit (-1);
-		} else
-		{
+		} else {
 			std::cout << "Success\nsuccessed connecting to the server\n";
 			std::string password(av[2]);
 			std::string pass_resp = "PASS " + password + "\r\n";
