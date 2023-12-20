@@ -3,15 +3,15 @@
 class Server
 {
 private:
-	std::map<int, std::string> _saveSemiCommands;
-	std::string _command;
+	std::map<int, std::string> _allCommands;
+	std::string _cmd;
 	std::string _password;
 	int _portNumber;
 	int _serverSock;
-	int _maxClientsNumber;
+	int _maxClients;
 	int _connectedClients;
 	std::string _serverName;
-	struct pollfd *_pollFds;
+	struct pollfd *fds;
 	std::map<int, Client> _clients;
 	std::vector<Channel> _channels;
 	std::vector<std::string> _clients_oper;
@@ -26,18 +26,18 @@ public:
 		oper_password = "rennacir";
 		_password = password;
 		_portNumber = port;
-		_maxClientsNumber = 50;
+		_maxClients = 50;
 		_connectedClients = 0;
 		_serverName = "TIGERS";
-		_pollFds = new struct pollfd[_maxClientsNumber];
+		fds = new struct pollfd[_maxClients];
 	}
 
-	int getMaxClientsNumber()
+	int getMaxClients()
 	{
-		return _maxClientsNumber;
+		return _maxClients;
 	}
 
-	void setPass(std::string pass)
+	void setPassword(std::string pass)
 	{
 		_password = pass;
 	}
@@ -47,7 +47,7 @@ public:
 		_portNumber = port;
 	}
 
-	void setServerSock(int socket)
+	void setServerSocket(int socket)
 	{
 		_serverSock = socket;
 	}
@@ -87,7 +87,7 @@ public:
 		}
 	}
 
-	void executeAll(Client &client, std::string buffer, int &clientSocket, std::string _password)
+	void runAllCommands(Client &client, std::string buffer, int &clientSocket, std::string _password)
 	{
 		std::string buffer_temp = buffer;
 		char *str;
@@ -135,78 +135,84 @@ public:
 		}
 	}
 
-	int CreateSocketConnection()
+	int createSocket()
 	{
-		int yes = 1;
+		int agreed = 1;
 		struct sockaddr_in addr;
 		char serverIP[INET_ADDRSTRLEN];
-		int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-		if (sockfd < 0)
+		int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+		if (serverSocket < 0)
 		{
 			std::cerr << "Error/ninitializing the socket\n";
 			return -1;
 		}
-		setServerSock(sockfd);
+		setServerSocket(serverSocket);
 		sockaddr_in serverAddress;
 		serverAddress.sin_family = AF_INET;
 		serverAddress.sin_port = htons(_portNumber);
 		serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
-		setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
+		setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &agreed, sizeof(int));
 		inet_ntop(AF_INET, &(addr.sin_addr), serverIP, INET_ADDRSTRLEN);
-		if (bind(sockfd, (sockaddr *)&serverAddress, sizeof(serverAddress)) == -1) {
+		if (bind(serverSocket, (sockaddr *)&serverAddress, sizeof(serverAddress)) == -1) {
 			std::cout << "Error/nbinding with the socket failed\n";
-			close(sockfd);
+			close(serverSocket);
 			return -1;
 		}
-		return sockfd;
+		return serverSocket;
 	}
 
-	void initClient()
+	void initAllClientFds()
 	{
-		for (int i = 1; i < _maxClientsNumber; i++)
+		int i = 0;
+
+		while (i < _maxClients)
 		{
-			_pollFds[i].fd = 0;
-			_pollFds[i].events = POLLIN;
-			_pollFds[i].revents = 0;
+			fds[i].fd = 0;
+			fds[i].events = POLLIN;
+			fds[i].revents = 0;
+			i++;
 		}
 	}
 
-	int indexClient()
+	int getFreeFd()
 	{
-		int i;
-		for (i = 1; i < _maxClientsNumber; i++)
+		int i = 1;
+		while (i < _maxClients)
 		{
-			if (_pollFds[i].fd == -1)
+			if (fds[i].fd == -1)
 				return i;
+			i++;
 		}
-		for (i = 1; i < _maxClientsNumber; i++)
+		i = 1;
+		while (i < _maxClients)
 		{
-			if (_pollFds[i].fd == 0)
+			if (fds[i].fd == 0)
 				break;
+			i++;
 		}
 		return i;
 	}
 
-	void ServerRun()
+	void executeServer()
 	{
-		initClient();
-		std::cout << "Server is running\n";
+		initAllClientFds();
+		std::cout << "Server is running on port " << _portNumber << std::endl;
 		int flag = fcntl(_serverSock, F_GETFL, 0);
 		fcntl(_serverSock, F_SETFL, flag | O_NONBLOCK);
-		_pollFds[0].fd = _serverSock;
-		_pollFds[0].events = POLLIN;
-		_pollFds[0].revents = 0;
-		int response = 0;
+		fds[0].fd = _serverSock;
+		fds[0].events = POLLIN;
+		fds[0].revents = 0;
+		int res = 0;
 		int i = 1;
 		while (1)
 		{
-			response = poll(_pollFds, _maxClientsNumber, -1);
-			if (response == -1)
+			res = poll(fds, _maxClients, -1);
+			if (res == -1)
 			{
 				std::cout << "Error\npoll failed\n";
 				return;
 			}
-			if (_pollFds[0].revents & POLLIN)
+			if (fds[0].revents & POLLIN)
 			{
 				struct sockaddr_in addr;
 				char clientIP[INET_ADDRSTRLEN];
@@ -223,47 +229,47 @@ public:
 						return;
 				}
 				std::cout << "Client socket is:" << clientSocket << std::endl;
-				i = indexClient();
-				_pollFds[i].fd = clientSocket;
-				_pollFds[i].events = POLLIN;
-				_pollFds[i].revents = 0;
-				_clients.insert(std::make_pair(_pollFds[i].fd, Client()));
+				i = getFreeFd();
+				fds[i].fd = clientSocket;
+				fds[i].events = POLLIN;
+				fds[i].revents = 0;
+				_clients.insert(std::make_pair(fds[i].fd, Client()));
 				inet_ntop(AF_INET, &(addr.sin_addr), clientIP, INET_ADDRSTRLEN);
-				_clients[_pollFds[i].fd].setClientIP(clientIP);
-				int flag = fcntl(_pollFds[i].fd, F_GETFL, 0);
-				fcntl(_pollFds[i].fd, F_SETFL, flag | O_NONBLOCK);
+				_clients[fds[i].fd].setClientIP(clientIP);
+				int flag = fcntl(fds[i].fd, F_GETFL, 0);
+				fcntl(fds[i].fd, F_SETFL, flag | O_NONBLOCK);
 			}
 			for (long unsigned int j = 1; j <= _clients.size(); j++)
 			{
-				if (_pollFds[j].fd == -1)
+				if (fds[j].fd == -1)
 					continue;
-				if (_pollFds[j].revents & POLLIN)
+				if (fds[j].revents & POLLIN)
 				{
-					char buffer[1024];
-					memset(buffer, 0, sizeof(buffer));
-					response = recv(_pollFds[j].fd, buffer, sizeof(buffer), 0);
-					if (response == -1)
+					char buf[1024];
+					memset(buf, 0, sizeof(buf));
+					res = recv(fds[j].fd, buf, sizeof(buf), 0);
+					if (res == -1)
 					{
-						std::cout << "Socket fd: " << _pollFds[j].fd << " is " << j << std::endl;
-						std::cout << "Error\nrecv failed: " << response << std::endl;
+						std::cout << "Socket fd: " << fds[j].fd << " is " << j << std::endl;
+						std::cout << "Error\nrecv failed: " << res << std::endl;
 						if (errno == EAGAIN || errno == EWOULDBLOCK)
 							continue;
 						else
 							return;
 					}
-					else if (response == 0)
+					else if (res == 0)
 					{
-						std::cout << "Client " << _pollFds[j].fd << " disconnected from the server\n";
-						_saveSemiCommands.erase(_pollFds[j].fd);
-						_clients.erase(_pollFds[j].fd);
-						close(_pollFds[j].fd);
-						_pollFds[j].fd = -1;
+						std::cout << "Client " << fds[j].fd << " disconnected from the server\n";
+						_allCommands.erase(fds[j].fd);
+						_clients.erase(fds[j].fd);
+						close(fds[j].fd);
+						fds[j].fd = -1;
 						continue;
 					}
 					else
 					{
-						std::string receivedData(buffer, response);
-						std::string &partialCommand = _saveSemiCommands[_pollFds[j].fd];
+						std::string receivedData(buf, res);
+						std::string &partialCommand = _allCommands[fds[j].fd];
 						partialCommand += receivedData;
 
 						if (!partialCommand.empty())
@@ -271,16 +277,16 @@ public:
 							size_t newlinePos = partialCommand.find('\n');
 							while (newlinePos != std::string::npos)
 							{
-								_command = partialCommand.substr(0, newlinePos);
+								_cmd = partialCommand.substr(0, newlinePos);
 								partialCommand = partialCommand.substr(newlinePos + 1);
 								newlinePos = partialCommand.find('\n');
-								std::cout << _command << std::endl;
-								if (_command == "\0")
+								std::cout << _cmd << std::endl;
+								if (_cmd == "\0")
 									continue;
-								if (_command.find('\r') != std::string::npos)
-									executeAll(_clients[_pollFds[j].fd], _command.substr(0, _command.size() - 1), _pollFds[j].fd, _password);
+								if (_cmd.find('\r') != std::string::npos)
+									runAllCommands(_clients[fds[j].fd], _cmd.substr(0, _cmd.size() - 1), fds[j].fd, _password);
 								else
-									executeAll(_clients[_pollFds[j].fd], _command, _pollFds[j].fd, _password);
+									runAllCommands(_clients[fds[j].fd], _cmd, fds[j].fd, _password);
 							}
 						}
 					}
@@ -2036,11 +2042,11 @@ public:
 		_channels.clear();
 		for (long unsigned int j = 1; j <= _clients.size(); j++)
 		{
-			if (_pollFds[j].fd != -1 && _pollFds[j].fd != 0)
-				close(_pollFds[j].fd);
+			if (fds[j].fd != -1 && fds[j].fd != 0)
+				close(fds[j].fd);
 		}
 		_clients.clear();
-		close(_pollFds[0].fd);
+		close(fds[0].fd);
 		exit(0);
 	}
 
@@ -2096,15 +2102,15 @@ At least an uppercase character\nAt least a lowercase character\n\
 At least a special character\n";
 		return (0);
 	}
-	server.setPass(av[2]);
+	server.setPassword(av[2]);
 	server.setPort(std::stoi(av[1]));
-	socket = server.CreateSocketConnection();
-	if (listen(socket, server.getMaxClientsNumber()) == -1)
+	socket = server.createSocket();
+	if (listen(socket, server.getMaxClients()) == -1)
 	{
-		std::cerr << "Error/nlisten failed\n";
+		std::cout << "Error/nlisten failed\n";
 		return (0);
 	}
-	server.setServerSock(socket);
-	server.ServerRun();
+	server.setServerSocket(socket);
+	server.executeServer();
 	return (0);
 }
