@@ -139,6 +139,7 @@ void Server::mode_command(Client &client, std::string buffer, int &clientSocket)
 	std::string limit;
 	std::vector<char *> tokens;
 	std::string clientIP(client.getClientIP());
+	std::string serverHostname(getServerHost());
 
 	str = strtok((char *)(buffer.c_str() + 5), " ");
 	while (str != NULL) {
@@ -146,18 +147,18 @@ void Server::mode_command(Client &client, std::string buffer, int &clientSocket)
 		str = strtok(NULL, " ");
 	}
 	if (tokens.size() < 2) {
-		response = ":" + client.get_nickname() + " 461 " + client.get_nickname() + " MODE :Not enough parameters\r\n";
+		response = ":" + serverHostname + " 461 " + client.get_nickname() + " MODE :Not enough parameters\r\n";
 		bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 		return;
 	}
 	if (tokens.size() >= 2) {
 		if (!check_channel_if_exist(tokens[0])) {
-			response = ":" + client.get_nickname() + " 403 " + client.get_nickname() + tokens[0] + " :No such channel\r\n";
+			response = ":" + serverHostname + " 403 " + client.get_nickname() + tokens[0] + " :No such channel\r\n";
 			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 			return;
 		}
 		if (!check_client_is_op(client, tokens[0])) {
-			response = ":" + client.get_nickname() + " 482 " + client.get_nickname() + " :You're not channel operator\r\n";
+			response = ":" + serverHostname + " 482 " + client.get_nickname() + " :You're not channel operator\r\n";
 			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 			return;
 		}
@@ -170,39 +171,39 @@ void Server::mode_command(Client &client, std::string buffer, int &clientSocket)
 					|| !std::strcmp(options[p].c_str(), "k") || !std::strcmp(options[p].c_str(), "o") || !std::strcmp(options[p].c_str(), "l")) {
 					if (!std::strcmp(options[p].c_str(), "+k") || !std::strcmp(options[p].c_str(), "k")) {
 						if (ch.k == 1) {
-							response = ":" + client.get_nickname() + " 467 " + client.get_nickname() + " " + tokens[0] + " :Channel key already set\r\n";
+							response = ":" + serverHostname + " 467 " + client.get_nickname() + " " + tokens[0] + " :Channel key already set\r\n";
 							bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 							args_count++;
 							continue;
 						}
 						if (args_count >= arguments.size()) {
-							response = ":" + client.get_nickname() + " 461 " + client.get_nickname() + " MODE :Not enough parameters\r\n";
+							response = ":" + serverHostname + " 461 " + client.get_nickname() + " MODE :Not enough parameters\r\n";
 							bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 							continue;
 						}
 						set_channel_psw_and_mode(tokens[0], arguments[args_count], 1);
 						for (std::map<int, Client>::iterator iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
 							if (check_if_client_already_joined((*iter2).second, tokens[0])) {
-								response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + clientIP + " MODE " + tokens[0] + " +k " + arguments[args_count] + "\r\n";
+								response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + serverHostname + " MODE " + tokens[0] + " +k " + arguments[args_count] + "\r\n";
 								bytes_sent = send((*iter2).first, response.c_str(), response.size(), 0);
 							}
 						}
 						args_count++;
 					} else if (!std::strcmp(options[p].c_str(), "+o") || !std::strcmp(options[p].c_str(), "o")) {
 						if (args_count >= arguments.size()) {
-							response = ":" + client.get_nickname() + " 461 " + client.get_nickname() + " MODE :Not enough parameters\r\n";
+							response = ":" + serverHostname + " 461 " + client.get_nickname() + " MODE :Not enough parameters\r\n";
 							bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 							continue;
 						}
 						if (!check_if_client_exist(arguments[args_count])) {
-							response = ":" + client.get_nickname() + " 401 " + client.get_nickname() + " " + tokens[2] + " :No such nick\r\n";
+							response = ":" + serverHostname + " 401 " + client.get_nickname() + " " + tokens[2] + " :No such nick\r\n";
 							bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 							std::cout << "haaaa\n";
 							args_count++;
 							continue;
 						}
 						if (!check_new_already_join(arguments[args_count], tokens[0])) {
-							response = ":" + client.get_nickname() + " 441 " + client.get_nickname() + " " + tokens[0] + " :He is not on that channel\r\n";
+							response = ":" + serverHostname + " 441 " + client.get_nickname() + " " + tokens[0] + " :He is not on that channel\r\n";
 							bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 							args_count++;
 							continue;
@@ -212,7 +213,7 @@ void Server::mode_command(Client &client, std::string buffer, int &clientSocket)
 								change_client_mode_o(arguments[args_count], tokens[0], 1);
 								for (std::map<int, Client>::iterator iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
 									if (check_if_client_already_joined((*iter2).second, tokens[0])) {
-										response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + clientIP + " MODE " + tokens[0] + " +o " + arguments[args_count] + "\r\n";
+										response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + serverHostname + " MODE " + tokens[0] + " +o " + arguments[args_count] + "\r\n";
 										bytes_sent = send((*iter2).first, response.c_str(), response.size(), 0);
 									}
 								}
@@ -224,11 +225,11 @@ void Server::mode_command(Client &client, std::string buffer, int &clientSocket)
 						}
 					} else if (!std::strcmp(options[p].c_str(), "+l") || !std::strcmp(options[p].c_str(), "l")) {
 						if (args_count >= arguments.size()) {
-							response = ":" + client.get_nickname() + " 461 " + client.get_nickname() + " MODE :Not enough parameters\r\n";
+							response = ":" + serverHostname + " 461 " + client.get_nickname() + " MODE :Not enough parameters\r\n";
 							bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 							continue;
 						} if (!set_limit(tokens[0], arguments[args_count])) {
-							response = ":" + client.get_nickname() + " 468 " + client.get_nickname() + " " + tokens[0] + " :Invalid channel user limit\r\n";
+							response = ":" + serverHostname + " 468 " + client.get_nickname() + " " + tokens[0] + " :Invalid channel user limit\r\n";
 							bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 							args_count++;
 							continue;
@@ -240,7 +241,7 @@ void Server::mode_command(Client &client, std::string buffer, int &clientSocket)
 						set_channel_mode(tokens[0], 'l', 1);
 						for (std::map<int, Client>::iterator iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
 							if (check_if_client_already_joined((*iter2).second, tokens[0])) {
-								response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + clientIP + " MODE " + tokens[0] + " +l " + arguments[args_count] + "\r\n";
+								response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + serverHostname + " MODE " + tokens[0] + " +l " + arguments[args_count] + "\r\n";
 								bytes_sent = send((*iter2).first, response.c_str(), response.size(), 0);
 							}
 						}
@@ -249,7 +250,7 @@ void Server::mode_command(Client &client, std::string buffer, int &clientSocket)
 				} else if (!std::strcmp(options[p].c_str(), "-k") || !std::strcmp(options[p].c_str(), "-o") || !std::strcmp(options[p].c_str(), "-l")) {
 					if (!std::strcmp(options[p].c_str(), "-k")) {
 						if (args_count >= arguments.size()) {
-							response = ":" + client.get_nickname() + " 461 " + client.get_nickname() + " MODE :Not enough parameters\r\n";
+							response = ":" + serverHostname + " 461 " + client.get_nickname() + " MODE :Not enough parameters\r\n";
 							bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 							continue;
 						}
@@ -262,29 +263,29 @@ void Server::mode_command(Client &client, std::string buffer, int &clientSocket)
 							args_count++;
 							for (std::map<int, Client>::iterator iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
 								if (check_if_client_already_joined((*iter2).second, tokens[0])) {
-									response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + clientIP + " MODE " + tokens[0] + " -k\r\n";
+									response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + serverHostname + " MODE " + tokens[0] + " -k\r\n";
 									bytes_sent = send((*iter2).first, response.c_str(), response.size(), 0);
 								}
 							}
 						} else {
-							response = ":" + client.get_nickname() + " 475 " + client.get_nickname() + " " + tokens[0] + " :Cannot remove channel key -bad key\r\n";
+							response = ":" + serverHostname + " 475 " + client.get_nickname() + " " + tokens[0] + " :Cannot remove channel key -bad key\r\n";
 							bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 							args_count++;
 						}
 					} else if (!std::strcmp(options[p].c_str(), "-o")) {
 						if (args_count >= arguments.size()) {
-							response = ":" + client.get_nickname() + " 461 " + client.get_nickname() + " MODE :Not enough parameters\r\n";
+							response = ":" + serverHostname + " 461 " + client.get_nickname() + " MODE :Not enough parameters\r\n";
 							bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 							continue;
 						}
 						if (!check_if_client_exist(arguments[args_count])) {
-							response = ":" + client.get_nickname() + " 401 " + client.get_nickname() + " " + tokens[2] + " :No such nick\r\n";
+							response = ":" + serverHostname + " 401 " + client.get_nickname() + " " + tokens[2] + " :No such nick\r\n";
 							bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 							args_count++;
 							continue;
 						}
 						if (!check_new_already_join(arguments[args_count], tokens[0])) {
-							response = ":" + client.get_nickname() + " 441 " + client.get_nickname() + " " + tokens[0] + " :He is not on that channel\r\n";
+							response = ":" + serverHostname + " 441 " + client.get_nickname() + " " + tokens[0] + " :He is not on that channel\r\n";
 							bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 							args_count++;
 							continue;
@@ -294,7 +295,7 @@ void Server::mode_command(Client &client, std::string buffer, int &clientSocket)
 								change_client_mode_o(arguments[args_count], tokens[0], 0);
 								for (std::map<int, Client>::iterator iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
 									if (check_if_client_already_joined((*iter2).second, tokens[0])) {
-										response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + clientIP + " MODE " + tokens[0] + " -o " + arguments[args_count] + "\r\n";
+										response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + serverHostname + " MODE " + tokens[0] + " -o " + arguments[args_count] + "\r\n";
 										bytes_sent = send((*iter2).first, response.c_str(), response.size(), 0);
 									}
 								}
@@ -310,13 +311,13 @@ void Server::mode_command(Client &client, std::string buffer, int &clientSocket)
 								set_channel_mode(tokens[0], 'l', 0);
 								for (std::map<int, Client>::iterator iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
 									if (check_if_client_already_joined((*iter2).second, tokens[0])) {
-										response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + clientIP + " MODE " + tokens[0] + " -l \r\n";
+										response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + serverHostname + " MODE " + tokens[0] + " -l \r\n";
 										bytes_sent = send((*iter2).first, response.c_str(), response.size(), 0);
 									}
 								}
 							}
 						} else {
-							response = ":" + client.get_nickname() + " 461 " + client.get_nickname() + " MODE :Not enough parameters\r\n";
+							response = ":" + serverHostname + " 461 " + client.get_nickname() + " MODE :Not enough parameters\r\n";
 							bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 						}
 					}
@@ -327,7 +328,7 @@ void Server::mode_command(Client &client, std::string buffer, int &clientSocket)
 							set_channel_mode(tokens[0], 'i', 1);
 							for (std::map<int, Client>::iterator iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
 								if (check_if_client_already_joined((*iter2).second, tokens[0])) {
-									response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + clientIP + " MODE " + tokens[0] + " +i \r\n";
+									response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + serverHostname + " MODE " + tokens[0] + " +i \r\n";
 									bytes_sent = send((*iter2).first, response.c_str(), response.size(), 0);
 								}
 							}
@@ -335,7 +336,7 @@ void Server::mode_command(Client &client, std::string buffer, int &clientSocket)
 							set_channel_mode(tokens[0], 't', 1);
 							for (std::map<int, Client>::iterator iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
 								if (check_if_client_already_joined((*iter2).second, tokens[0])) {
-									response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + clientIP + " MODE " + tokens[0] + " +t \r\n";
+									response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + serverHostname + " MODE " + tokens[0] + " +t \r\n";
 									bytes_sent = send((*iter2).first, response.c_str(), response.size(), 0);
 								}
 							}
@@ -347,7 +348,7 @@ void Server::mode_command(Client &client, std::string buffer, int &clientSocket)
 							set_channel_mode(tokens[0], 'i', 0);
 							for (std::map<int, Client>::iterator iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
 								if (check_if_client_already_joined((*iter2).second, tokens[0])) {
-									response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + clientIP + " MODE " + tokens[0] + " -i \r\n";
+									response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + serverHostname + " MODE " + tokens[0] + " -i \r\n";
 									bytes_sent = send((*iter2).first, response.c_str(), response.size(), 0);
 								}
 							}
@@ -355,14 +356,14 @@ void Server::mode_command(Client &client, std::string buffer, int &clientSocket)
 							set_channel_mode(tokens[0], 't', 0);
 							for (std::map<int, Client>::iterator iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
 								if (check_if_client_already_joined((*iter2).second, tokens[0])) {
-									response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + clientIP + " MODE " + tokens[0] + " -t \r\n";
+									response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + serverHostname + " MODE " + tokens[0] + " -t \r\n";
 									bytes_sent = send((*iter2).first, response.c_str(), response.size(), 0);
 								}
 							}
 						}
 					}
 				} else {
-					response = ":" + client.get_nickname() + " 472 " + client.get_nickname() + tokens[0] + " " + options[p].substr(1) +  " :is unknown mode char to me\r\n";
+					response = ":" + serverHostname + " 472 " + client.get_nickname() + tokens[0] + " " + options[p].substr(1) +  " :is unknown mode char to me\r\n";
 					bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 				}
 			}

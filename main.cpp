@@ -8,6 +8,18 @@ void signal_handler(int sig) {
 	}
 }
 
+int check_is_int(char *limit) {
+	int i;
+
+	i = 0;
+	while (limit[i]) {
+		if (limit[i] < '0' || limit[i] > '9')
+			return 0;
+		i++;
+	}
+	return 1;
+}
+
 int passwordHandler(char *pass) {
 	int Digit = 0;
 	int LowerCase = 0;
@@ -44,11 +56,20 @@ int main(int ac, char **av) {
 		std::cerr << "\033[31mWrong parametres !!!\033[0m\nUsage: ./ft_irc port password\n";
 		return (0);
 	}
+	if (!check_is_int(av[1]) || atol(av[1]) < 1024 || atol(av[1]) > 65535)
+    {
+        std::cerr << "\033[31mWrong parametres !!!\033[0m\nUsage: ./ft_irc port password\n";
+        return (0);
+    }
 	if (!passwordHandler(av[2])) {
 		std::cerr << "\033[31mWrong password !!!\033[0m\n\033[33mPassword should be:\033[0m\nSize greater than 7\nSize Lower than 21 characters\n\
 At least an uppercase character\nAt least a lowercase character\n\
 At least a special character\n";
 		return (0);
+	}
+	if (server.settingHostName()) {
+		std::cerr << "Error\nGetting hostname\n";
+		return 0;
 	}
 	server.setPassword(av[2]);
 	server.setPortNumber(std::stoi(av[1]));

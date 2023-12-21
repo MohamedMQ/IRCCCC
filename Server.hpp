@@ -17,6 +17,7 @@ class Server
 {
 private:
 	std::map<int, std::string> _commands;
+	char _hostname[256];
 	std::string _command;
 	std::string _password;
 	struct pollfd *_fds;
@@ -37,6 +38,8 @@ public:
 	void setPortNumber(int port);
 	void setServerSocket(int socket);
 	std::string getServerName();
+	char *getServerHost();
+	int settingHostName();
 	int requiredParams(Client &client);
 	void params_requirements(Client &client, int &clientSocket);
 	void executeAllCommands(Client &client, std::string buffer, int &clientSocket);
@@ -88,7 +91,6 @@ public:
 	void kick_command(Client &client, std::string command, int &clientSocket);
 	void bot_commad(Client &client, std::string command, int &clientSocket);
 	void eraseAllClients();
-	int positif_okl_options(Client &client, int &clientSocket, const char *options_p, unsigned long *count_args, std::vector<char *> tokens);
 
 };
 

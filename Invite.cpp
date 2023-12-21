@@ -53,6 +53,7 @@ void Server::invite_command(Client &client, std::string buffer, int clientSocket
 	std::string response;
 	int bytes_sent;
 	std::string clientIP(client.getClientIP());
+	std::string serverHostname(getServerHost());
 
 	str = strtok((char *)(buffer.c_str() + 7), " ");
 	while (str != NULL) {
@@ -63,17 +64,17 @@ void Server::invite_command(Client &client, std::string buffer, int clientSocket
 		int pos = temp_buffer.find(tokens[1]);
 		std::string chann_name = temp_buffer.substr(pos);
 		if (!check_if_client_exist(tokens[0])) {
-			response = ":" + client.get_nickname() + " 401 " + client.get_nickname() + " " + tokens[0] + " :No such nick\r\n";
+			response = ":" + serverHostname + " 401 " + client.get_nickname() + " " + tokens[0] + " :No such nick\r\n";
 			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 			return;
 		}
 		if (!check_channel_if_exist(chann_name)) {
-			response = ":" + client.get_nickname() + " 403 " + client.get_nickname() + " " + chann_name + " :No such channel\r\n";
+			response = ":" + serverHostname + " 403 " + client.get_nickname() + " " + chann_name + " :No such channel\r\n";
 			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 			return;
 		}
 		if (check_if_kicked_client_joined(tokens[0], chann_name)) {
-			response = ":" + client.get_nickname() + " 443 " + client.get_nickname() + " " + tokens[0] + " " + chann_name + " :is already on channel\r\n";
+			response = ":" + serverHostname + " 443 " + client.get_nickname() + " " + tokens[0] + " " + chann_name + " :is already on channel\r\n";
 			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 			return;
 		}
@@ -83,17 +84,17 @@ void Server::invite_command(Client &client, std::string buffer, int clientSocket
 				if ((*iter2).second.get_nickname() == tokens[0])
 					break;
 			}
-			response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + clientIP + " INVITE " + tokens[0] + " " + chann_name + "\r\n";
+			response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + serverHostname + " INVITE " + tokens[0] + " " + chann_name + "\r\n";
 			bytes_sent = send((*iter2).first, response.c_str(), response.size(), 0);
-			response = ":" + client.get_nickname() + " 001 " + client.get_nickname() + " :Inviting " + tokens[0] + " to " + chann_name + "\r\n";
+			response = ":" + serverHostname + " 001 " + client.get_nickname() + " :Inviting " + tokens[0] + " to " + chann_name + "\r\n";
 			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 			add_channel_to_invited(tokens[0], chann_name);
 		} else {
-			response = ":" + client.get_nickname() + " 481 " + client.get_nickname() + " :Permission Denied- You're not an IRC operator\r\n";
+			response = ":" + serverHostname + " 481 " + client.get_nickname() + " :Permission Denied- You're not an IRC operator\r\n";
 			bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 		}
 	} else {
-		response = ":" + client.get_nickname() + " 461 " + client.get_nickname() + " INVITE :Not enough parameters\r\n";
+		response = ":" + serverHostname + " 461 " + client.get_nickname() + " INVITE :Not enough parameters\r\n";
 		bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 	}
 }

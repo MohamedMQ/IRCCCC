@@ -21,6 +21,16 @@ std::string Server::getServerName() {
 	return _serverName;
 }
 
+char *Server::getServerHost() {
+	return _hostname;
+}
+
+int	Server::settingHostName() {
+	if (gethostname(_hostname, sizeof(_hostname)))
+		return -1;
+	return 0;
+}
+
 int Server::requiredParams(Client &client) {
 	if (client.get_is_userF() && client.get_is_nickF() && client.get_is_passF())
 		return (1);
@@ -31,15 +41,16 @@ int Server::requiredParams(Client &client) {
 void Server::params_requirements(Client &client, int &clientSocket) {
 	std::string response;
 	int bytes_read;
+	std::string serverHostname(getServerHost());
 
 	if (!client.get_is_passF()) {
-		std::string response = ":" + this->getServerName() + " 464 " + client.get_nickname() + " :You must identify with a password before running commands\r\n";
+		std::string response = ":" + serverHostname + " 464 " + client.get_nickname() + " :You must identify with a password before running commands\r\n";
 		bytes_read = send(clientSocket, response.c_str(), response.size(), 0);
 	} else if (!client.get_is_nickF()) {
-		std::string response = ":" + this->getServerName() + " 431 " + client.get_nickname() + " :No nickname given. Use NICK command to set your nickname\r\n";
+		std::string response = ":" + serverHostname + " 431 " + client.get_nickname() + " :No nickname given. Use NICK command to set your nickname\r\n";
 		bytes_read = send(clientSocket, response.c_str(), response.size(), 0);
 	} else {
-		std::string response = ":" + this->getServerName() + " 451 * :No username given. Use USER command to set your username\r\n";
+		std::string response = ":" + serverHostname + " 451 " + client.get_nickname() + " :No username given. Use USER command to set your username\r\n";
 		bytes_read = send(clientSocket, response.c_str(), response.size(), 0);
 	}
 }
@@ -51,6 +62,7 @@ Server::Server(std::string password, int port) {
 	_connectedClients = 0;
 	_serverName = "TIGERS";
 	_fds = new struct pollfd[_clientsNumber];
+	memset(_hostname, 0, sizeof(_hostname));
 }
 
 int Server::createServerSocket()

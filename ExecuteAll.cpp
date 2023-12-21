@@ -29,10 +29,12 @@ void Server::fill_client(std::string command, Client &client, int flag) {
 }
 
 void Server::executeAllCommands(Client &client, std::string buffer, int &clientSocket) {
+	std::string serverHostname(getServerHost());
 	std::string buffer_temp = buffer;
-	char *str;
 	std::vector<std::string> tokens;
 	int bytes_sent;
+	char *str;
+
 	str = strtok((char *)(buffer.c_str()), " ");
 	while (str != NULL) {
 		tokens.push_back(str);
@@ -66,7 +68,7 @@ void Server::executeAllCommands(Client &client, std::string buffer, int &clientS
 	else if (!requiredParams(client))
 		params_requirements(client, clientSocket);
 	else {
-		std::string response = ":" + this->getServerName() + " 421 " + client.get_nickname() + tokens[0] + " :Unknown command\r\n";
+		std::string response = ":" + serverHostname + " 421 " + client.get_nickname() + tokens[0] + " :Unknown command\r\n";
 		bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 	}
 }

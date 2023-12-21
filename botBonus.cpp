@@ -13,6 +13,7 @@
 #include <vector>
 #include <arpa/inet.h>
 #include <signal.h>
+#include "Server.hpp"
 
 int clientSocket;
 
@@ -234,9 +235,16 @@ int pars_ip(std::string str) {
 	return 1;
 }
 
+int pars_port(char *av) {
+    if (!check_is_int(av) || atol(av) < 1024 || atol(av) > 65535)
+        return 0;
+    return 1;
+}
+
 int main(int ac, char **av) {
 	if (ac == 4) {
 		std::string _commands;
+		std::string passwrd(av[2]);
 		struct sockaddr_in serverAddr;
 		std::string _cmd;
 		signal(SIGINT, signal_handler);
@@ -247,11 +255,13 @@ int main(int ac, char **av) {
 		size_t posNL;
 
 		std::memset(&serverAddr, 0, sizeof(serverAddr));
+		if (passwrd.empty() || !pars_ip(av[3]) || !pars_port(av[1])) {
+			std::cerr << "\033[31mWrong parametres !!!\033[0m\nUsage: ./bot port password IP_address\n";
+			return 1;
+		}
 		clientSocket = socket(AF_INET, SOCK_STREAM, 0);
 		serverAddr.sin_family = AF_INET;
 		serverAddr.sin_port = htons(atol(av[1]));
-		if (!pars_ip(av[3]))
-			return 1;
 		serverAddr.sin_addr.s_addr = inet_addr(av[3]);
 		if (connect(clientSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == -1) {
 			std::cout << "Error\nfailed connecting to the server\n";
@@ -311,6 +321,6 @@ int main(int ac, char **av) {
 			}
 		}
 	} else
-		std::cerr << "Not enough parameters\n";
+		std::cerr << "Error \nNot enough parameters\n";
 	return 0;
 }
