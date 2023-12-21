@@ -8,7 +8,6 @@
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <poll.h>
-#include <iostream>
 #include <map>
 #include <vector>
 #include <arpa/inet.h>
@@ -16,6 +15,7 @@
 #include "Server.hpp"
 
 int clientSocket;
+struct pollfd *fds;
 
 typedef struct date {
 	int day;
@@ -99,13 +99,14 @@ void age_bot(char *birth_date, std::string client_name, int &clientSocket) {
 	int actual_day;
 	int actual_year;
 	date actual_date;
+	int count = 0;
+	int i = 0;
 	date birthday_date;
 	std::string mounts[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 	std::vector<char *> tokens;
 	time_t now = time(0);
 	char* dt = ctime(&now);
 	std::vector<std::string> tokens2;
-
 	str2 = strtok(dt, " ");
 	while (str2 != NULL) {
 		tokens2.push_back(str2);
@@ -114,12 +115,17 @@ void age_bot(char *birth_date, std::string client_name, int &clientSocket) {
 	actual_mounth = get_mounth(mounts, tokens2[1]);
 	actual_day = atoi(tokens2[2].c_str());
 	actual_year = atoi(tokens2[4].c_str());
+	while (birth_date[i]) {
+		if (birth_date[i] == '-')
+			count++;
+		i++;
+	}
 	str = strtok(birth_date, "-");
 	while (str != NULL) {
 		tokens.push_back(str);
 		str = strtok(NULL, "-");
 	}
-	if (tokens.size() < 3 || !check_is_int(tokens[0]) || !check_is_int(tokens[1]) || !check_is_int(tokens[2])
+	if (count != 2 || tokens.size() < 3 || !check_is_int(tokens[0]) || !check_is_int(tokens[1]) || !check_is_int(tokens[2])
 		|| atol(tokens[0]) < 1 || atol(tokens[0]) > 31 || atol(tokens[1]) < 1
 		|| atol(tokens[1]) > 12 || atol(tokens[2]) > actual_year) {
 		response = "PRIVMSG " + client_name + " " + "Invalid format: dd-mm-yy" +  " \r\n";
@@ -211,6 +217,7 @@ std::vector<int> pars_bot_command(std::string command, int &clientSocket) {
 void signal_handler(int sig) {
 	(void)sig;
 	close(clientSocket);
+	delete fds;
 	exit(1);
 }
 
@@ -228,10 +235,8 @@ int pars_ip(std::string str) {
 		if (temp_str[i] == '.')
 			count++;
 	}
-	if (tokens.size() != 4 || count != 3) {
-		std::cerr << "Error about the IP address" << std::endl;
+	if (tokens.size() != 4 || count != 3)
 		return 0;
-	}
 	return 1;
 }
 
@@ -249,8 +254,8 @@ int main(int ac, char **av) {
 		std::string _cmd;
 		signal(SIGINT, signal_handler);
 		std::vector<int> ints;
-		struct pollfd *fds;
 		char buf[1024];
+		std::string passBuf;
 		int flag;
 		size_t posNL;
 
@@ -269,10 +274,6 @@ int main(int ac, char **av) {
 		} else {
 			std::cout << "Success\nsuccessed connecting to the server\n";
 			std::string password(av[2]);
-			std::string pass_resp = "PASS " + password + "\r\n";
-			send(clientSocket, pass_resp.c_str(), pass_resp.size(), 0);
-			send(clientSocket, "NICK TIGERSBOT\r\n", strlen("NICK TIGERSBOT\r\n"), 0);
-			send(clientSocket, "USER TIGERSBOT 0 * TIGERSBOT\r\n", strlen("USER TIGERSBOT 0 * TIGERSBOT\r\n"), 0);
 		}
 		flag = fcntl(clientSocket, F_GETFL, 0);
 		fcntl(clientSocket, F_SETFL, flag | O_NONBLOCK);
@@ -281,6 +282,8 @@ int main(int ac, char **av) {
 		fds->events = POLLIN;
 		fds->revents = 0;
 		int res = 0;
+		int firstStart = 0;
+
 		while (1) {
 			res = poll(fds, 1, -1);
 			if (res == -1) {
@@ -296,7 +299,6 @@ int main(int ac, char **av) {
 						continue;
 					else
 						return -1;
-						// std::cout << "I MAMA \n";
 					} else if (res == 0) {
 						std::cout << "the server is closed for now, try later\n";
 						close(clientSocket);
@@ -313,7 +315,26 @@ int main(int ac, char **av) {
 								_cmd = assembleCommand.substr(0, posNL);
 								assembleCommand = assembleCommand.substr(posNL + 1);
 								std::cout << _cmd << std::endl;
-								ints = pars_bot_command(_cmd, clientSocket);
+								if (_cmd.find(":Password incorrect") != std::string::npos) {
+									std::string quit;
+									quit = "QUIT\n";
+									send(clientSocket, quit.c_str(), quit.size(), 0);
+									close (clientSocket);
+									delete fds;
+									return 1;
+								}
+								if (_cmd.find(":Password incorrect") == std::string::npos && firstStart == 1) {
+									send(clientSocket, "NICK TIGERSBOT\r\n", strlen("NICK TIGERSBOT\r\n"), 0);
+									send(clientSocket, "USER TIGERSBOT 0 * TIGERSBOT\r\n", strlen("USER TIGERSBOT 0 * TIGERSBOT\r\n"), 0);
+									firstStart = 2;
+								}
+								if (!firstStart) {
+									std::string pas = "PASS " + passwrd + "\r\n";
+									firstStart = 1;
+									send(clientSocket, pas.c_str(), pas.size(), 0);
+								}
+								if (firstStart == 2)
+									ints = pars_bot_command(_cmd, clientSocket);
 								posNL = assembleCommand.find('\n');
 							}
 						}

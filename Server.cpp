@@ -161,6 +161,7 @@ void Server::startServer() {
 					return;
 			}
 			std::cout << "Client socket is:" << clientSocket << std::endl;
+			send(clientSocket, "Welcome to the TIGERSIRC server\n", std::strlen("Welcome to the TIGERSIRC server\n"), 0);
 			i = getFreeAvailableFd();
 			_fds[i].fd = clientSocket;
 			_fds[i].events = POLLIN;
