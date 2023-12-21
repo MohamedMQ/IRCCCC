@@ -94,9 +94,6 @@ void age_bot(char *birth_date, std::string client_name, int &clientSocket) {
 	int bytes_sent;
 	char *str;
 	char *str2;
-	int actual_mounth;
-	int actual_day;
-	int actual_year;
 	date actual_date;
 	date birthday_date;
 	std::string mounts[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
@@ -110,9 +107,9 @@ void age_bot(char *birth_date, std::string client_name, int &clientSocket) {
 		tokens2.push_back(str2);
 		str2 = strtok(NULL, " ");
 	}
-	actual_mounth = get_mounth(mounts, tokens2[1]);
-	actual_day = atoi(tokens2[2].c_str());
-	actual_year = atoi(tokens2[4].c_str());
+	actual_date.month = get_mounth(mounts, tokens2[1]);
+	actual_date.day = atoi(tokens2[2].c_str());
+	actual_date.year = atoi(tokens2[4].c_str());
 	str = strtok(birth_date, "-");
 	while (str != NULL) {
 		tokens.push_back(str);
@@ -120,14 +117,11 @@ void age_bot(char *birth_date, std::string client_name, int &clientSocket) {
 	}
 	if (tokens.size() < 3 || !check_is_int(tokens[0]) || !check_is_int(tokens[1]) || !check_is_int(tokens[2])
 		|| atol(tokens[0]) < 1 || atol(tokens[0]) > 31 || atol(tokens[1]) < 1
-		|| atol(tokens[1]) > 12 || atol(tokens[2]) > actual_year) {
+		|| atol(tokens[1]) > 12 || atol(tokens[2]) > actual_date.year) {
 		response = "PRIVMSG " + client_name + " " + "Invalid format: dd-mm-yy" +  " \r\n";
 		bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 		return;
 	}
-	actual_date.day = actual_day;
-	actual_date.month = actual_mounth;
-	actual_date.year = actual_year;
 	birthday_date.day = atoi(tokens[0]);
 	birthday_date.month = atoi(tokens[1]);
 	birthday_date.year = atoi(tokens[2]);
@@ -179,12 +173,11 @@ void nickname_bot(std::string client_name, int &clientSocket) {
 	bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 }
 
-std::vector<int> pars_bot_command(std::string command, int &clientSocket) {
+void pars_bot_command(std::string command, int &clientSocket) {
 	char *str;
 	std::vector<std::string> tokens;
 	std::string response;
 	int bytes_sent;
-	std::vector<int> ints;
 
 	str = strtok((char *)(command.c_str()), " ");
 	while (str != NULL) {
@@ -203,8 +196,10 @@ std::vector<int> pars_bot_command(std::string command, int &clientSocket) {
 			nickname_bot(tokens[1], clientSocket);
 		}
 	} else
-		std::cout << "Please enter a flaag" << std::endl;
-	return ints;
+	{
+		response = "PRIVMSG " + tokens[2] + " " + "Please enter a valide flag" +  " \r\n";
+		bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
+	}
 }
 
 void signal_handler(int sig) {
@@ -234,6 +229,13 @@ int pars_ip(std::string str) {
 	return 1;
 }
 
+int pars_port(char *av)
+{
+	if (!check_is_int(av) || atol(av) < 1024 || atol(av) > 65535)
+		return 0;
+	return 1;
+}
+
 int main(int ac, char **av) {
 	if (ac == 4) {
 		std::string _commands;
@@ -249,9 +251,17 @@ int main(int ac, char **av) {
 		std::memset(&serverAddr, 0, sizeof(serverAddr));
 		clientSocket = socket(AF_INET, SOCK_STREAM, 0);
 		serverAddr.sin_family = AF_INET;
+		if (!pars_port(av[1]))
+		{
+			std::cerr << "\033[31mWrong parametres !!!\033[0m\nUsage: ./bot port password IP_address\n";
+			return 1;
+		}
 		serverAddr.sin_port = htons(atol(av[1]));
 		if (!pars_ip(av[3]))
+		{
+			std::cerr << "\033[31mWrong parametres !!!\033[0m\nUsage: ./bot port password IP_address\n";
 			return 1;
+		}
 		serverAddr.sin_addr.s_addr = inet_addr(av[3]);
 		if (connect(clientSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == -1) {
 			std::cout << "Error\nfailed connecting to the server\n";
@@ -286,7 +296,6 @@ int main(int ac, char **av) {
 						continue;
 					else
 						return -1;
-						// std::cout << "I MAMA \n";
 					} else if (res == 0) {
 						std::cout << "the server is closed for now, try later\n";
 						close(clientSocket);
@@ -303,7 +312,7 @@ int main(int ac, char **av) {
 								_cmd = assembleCommand.substr(0, posNL);
 								assembleCommand = assembleCommand.substr(posNL + 1);
 								std::cout << _cmd << std::endl;
-								ints = pars_bot_command(_cmd, clientSocket);
+								pars_bot_command(_cmd, clientSocket);
 								posNL = assembleCommand.find('\n');
 							}
 						}

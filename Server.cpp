@@ -210,6 +210,7 @@ void Server::eraseAllClients() {
 		if (_fds[j].fd != -1 && _fds[j].fd != 0)
 			close(_fds[j].fd);
 	}
+	delete[] _fds;
 	_clients.clear();
 	close(_fds[0].fd);
 	exit(0);

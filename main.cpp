@@ -36,11 +36,28 @@ int passwordHandler(char *pass) {
 	return 1;
 }
 
+int check_is_int(char *limit) {
+	int i;
+
+	i = 0;
+	while (limit[i]) {
+		if (limit[i] < '0' || limit[i] > '9')
+			return 0;
+		i++;
+	}
+	return 1;
+}
+
 int main(int ac, char **av) {
 	int socket;
 	signal(SIGINT, signal_handler);
 
 	if (ac != 3) {
+		std::cerr << "\033[31mWrong parametres !!!\033[0m\nUsage: ./ft_irc port password\n";
+		return (0);
+	}
+	if (!check_is_int(av[1]) || atol(av[1]) < 1024 || atol(av[1]) > 65535)
+	{
 		std::cerr << "\033[31mWrong parametres !!!\033[0m\nUsage: ./ft_irc port password\n";
 		return (0);
 	}
