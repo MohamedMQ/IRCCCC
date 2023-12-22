@@ -44,39 +44,40 @@ void Server::kick_command(Client &client, std::string command, int &clientSocket
 	int pos;
 	int bytes_sent;
 	std::string clientIP(client.getClientIP());
+	std::string serverHostname(getServerHost());
 
-	str = strtok((char *)(command.c_str() + 5), " ");
+	str = std::strtok((char *)(command.c_str() + 5), " ");
 	while (str != NULL) {
 		tokens.push_back(str);
-		str = strtok(NULL, " ");
+		str = std::strtok(NULL, " ");
 	}
 	if (tokens.size() < 2 || (tokens.size() == 2 && !std::strcmp(tokens[1], ":"))) {
-		response = ":" + client.get_nickname() + " 461 " + client.get_nickname() + " KICK :Not enough parameters\r\n";
+		response = ":" + serverHostname + " 461 " + client.get_nickname() + " KICK :Not enough parameters\r\n";
 		bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 		return;
 	}
 	if (!check_channel_if_exist(tokens[0])) {
-		response = ":" + client.get_nickname() + " 403 " + client.get_nickname() + " " + tokens[0] + " :No such channel\r\n";
+		response = ":" + serverHostname + " 403 " + client.get_nickname() + " " + tokens[0] + " :No such channel\r\n";
 		bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 		return;
 	}
 	if (!check_if_client_already_joined(client, tokens[0])) {
-		response = ":" + client.get_nickname() + " 442 " + client.get_nickname() + " " + tokens[0] + " :You're not on that channel\r\n";
+		response = ":" + serverHostname + " 442 " + client.get_nickname() + " " + tokens[0] + " :You're not on that channel\r\n";
 		bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 		return;
 	}
 	if (!check_if_client_exist(tokens[1])) {
-		response = ":" + client.get_nickname() + " 401 " + client.get_nickname() + " " + tokens[1] + " :No such nick\r\n";
+		response = ":" + serverHostname + " 401 " + client.get_nickname() + " " + tokens[1] + " :No such nick\r\n";
 		bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 		return;
 	}
 	if (!check_if_kicked_client_joined(tokens[1], tokens[0])) {
-		response = ":" + client.get_nickname() + " 441 " + client.get_nickname() + " " + tokens[1] + " " + tokens[0] + " :They aren't on that channel\r\n";
+		response = ":" + serverHostname + " 441 " + client.get_nickname() + " " + tokens[1] + " " + tokens[0] + " :They aren't on that channel\r\n";
 		bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 		return;
 	}
 	if (!check_client_is_op(client, tokens[0])) {
-		response = ":" + client.get_nickname() + " 482 " + client.get_nickname() + " :You're not channel operator\r\n";
+		response = ":" + serverHostname + " 482 " + client.get_nickname() + " :You're not channel operator\r\n";
 		bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 		return;
 	}
@@ -86,11 +87,11 @@ void Server::kick_command(Client &client, std::string command, int &clientSocket
 		pos = temp_command.find(tokens[2]);
 		reason = temp_command.substr(pos + 1);
 	}
-	response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + clientIP + " KICK " + tokens[0] + " " + tokens[1] + " :" + reason + "\r\n";
+	response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + serverHostname + " KICK " + tokens[0] + " " + tokens[1] + " :" + reason + "\r\n";
 	bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 	for (std::map<int, Client>::iterator iter2 = _clients.begin(); iter2 != _clients.end(); iter2++){
 		if (check_if_client_already_joined((*iter2).second, tokens[0])) {
-			response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + clientIP + " KICK " + tokens[0] + " " + tokens[1] + " :" + reason + "\r\n";
+			response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + serverHostname + " KICK " + tokens[0] + " " + tokens[1] + " :" + reason + "\r\n";
 			bytes_sent = send((*iter2).first, response.c_str(), response.size(), 0);
 		}
 	}

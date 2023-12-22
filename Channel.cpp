@@ -29,6 +29,18 @@ std::string Channel::get_name() {
 	return this->name;
 }
 
+void Channel::set_created_at()
+{
+	std::time_t now = std::time(nullptr);
+	std::tm timeInfo = *std::localtime(&now);
+	std::strftime(created_at, sizeof(created_at), "%b %d, %Y at %I:%M %p", &timeInfo);
+}
+
+char *Channel::get_created_at()
+{
+	return this->created_at;
+}
+
 void Channel::set_topic(std::string topic, std::string setter) {
 	std::time_t now = std::time(nullptr);
     std::tm timeInfo = *std::localtime(&now);

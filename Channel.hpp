@@ -37,6 +37,7 @@ class Channel {
 		std::string topic_setter;
 		char topic_time[80];
 		int client_limit;
+		char created_at[80];
 
 	public:
 		Channel();
@@ -45,6 +46,8 @@ class Channel {
 		void set_limit_num_of_clients(int l);
 		void set_channel_psw(std::string psw);
 		std::string get_channel_psw();
+		void set_created_at();
+		char *get_created_at();
 		void set_name(std::string name);
 		std::string get_name();
 		void set_topic(std::string topic, std::string nickname);

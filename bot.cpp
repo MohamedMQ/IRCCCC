@@ -11,10 +11,10 @@ void Server::bot_commad(Client &client, std::string command, int &clientSocket) 
 	int pos;
 	std::vector<char *> tokens;
 
-	str = strtok((char *)(command.c_str()), " ");
+	str = std::strtok((char *)(command.c_str()), " ");
 	while (str != NULL) {
 		tokens.push_back(str);
-		str = strtok(NULL, " ");
+		str = std::strtok(NULL, " ");
 	}
 	if (tokens.size() == 3 && !std::strcmp(tokens[2], "nickname")) {
 		pos = temp_command.find(tokens[2]);

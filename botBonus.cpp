@@ -8,13 +8,14 @@
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <poll.h>
-#include <iostream>
 #include <map>
 #include <vector>
 #include <arpa/inet.h>
 #include <signal.h>
+#include "Server.hpp"
 
 int clientSocket;
+struct pollfd *fds;
 
 typedef struct date {
 	int day;
@@ -94,37 +95,49 @@ void age_bot(char *birth_date, std::string client_name, int &clientSocket) {
 	int bytes_sent;
 	char *str;
 	char *str2;
+	int actual_mounth;
+	int actual_day;
+	int actual_year;
 	date actual_date;
+	int count = 0;
+	int i = 0;
 	date birthday_date;
 	std::string mounts[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 	std::vector<char *> tokens;
 	time_t now = time(0);
 	char* dt = ctime(&now);
 	std::vector<std::string> tokens2;
-
-	str2 = strtok(dt, " ");
+	str2 = std::strtok(dt, " ");
 	while (str2 != NULL) {
 		tokens2.push_back(str2);
-		str2 = strtok(NULL, " ");
+		str2 = std::strtok(NULL, " ");
 	}
-	actual_date.month = get_mounth(mounts, tokens2[1]);
-	actual_date.day = atoi(tokens2[2].c_str());
-	actual_date.year = atoi(tokens2[4].c_str());
-	str = strtok(birth_date, "-");
+	actual_mounth = get_mounth(mounts, tokens2[1]);
+	actual_day = std::atol(tokens2[2].c_str());
+	actual_year = std::atol(tokens2[4].c_str());
+	while (birth_date[i]) {
+		if (birth_date[i] == '-')
+			count++;
+		i++;
+	}
+	str = std::strtok(birth_date, "-");
 	while (str != NULL) {
 		tokens.push_back(str);
-		str = strtok(NULL, "-");
+		str = std::strtok(NULL, "-");
 	}
-	if (tokens.size() < 3 || !check_is_int(tokens[0]) || !check_is_int(tokens[1]) || !check_is_int(tokens[2])
-		|| atol(tokens[0]) < 1 || atol(tokens[0]) > 31 || atol(tokens[1]) < 1
-		|| atol(tokens[1]) > 12 || atol(tokens[2]) > actual_date.year) {
+	if (count != 2 || tokens.size() < 3 || !check_is_int(tokens[0]) || !check_is_int(tokens[1]) || !check_is_int(tokens[2])
+		|| std::atol(tokens[0]) < 1 || std::atol(tokens[0]) > 31 || std::atol(tokens[1]) < 1
+		|| std::atol(tokens[1]) > 12 || std::atol(tokens[2]) > actual_year) {
 		response = "PRIVMSG " + client_name + " " + "Invalid format: dd-mm-yy" +  " \r\n";
 		bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 		return;
 	}
-	birthday_date.day = atoi(tokens[0]);
-	birthday_date.month = atoi(tokens[1]);
-	birthday_date.year = atoi(tokens[2]);
+	actual_date.day = actual_day;
+	actual_date.month = actual_mounth;
+	actual_date.year = actual_year;
+	birthday_date.day = std::atol(tokens[0]);
+	birthday_date.month = std::atol(tokens[1]);
+	birthday_date.year = std::atol(tokens[2]);
 	ints = count_age(actual_date, birthday_date);
 	if (ints[0] >= 0) {
 		response = "PRIVMSG " + client_name + " :your age is : " + std::to_string(ints[2]) + " years " + std::to_string(ints[1]) + " months " + std::to_string(ints[0]) + " days\r\n";
@@ -173,16 +186,17 @@ void nickname_bot(std::string client_name, int &clientSocket) {
 	bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 }
 
-void pars_bot_command(std::string command, int &clientSocket) {
+std::vector<int> pars_bot_command(std::string command, int &clientSocket) {
 	char *str;
 	std::vector<std::string> tokens;
 	std::string response;
 	int bytes_sent;
+	std::vector<int> ints;
 
-	str = strtok((char *)(command.c_str()), " ");
+	str = std::strtok((char *)(command.c_str()), " ");
 	while (str != NULL) {
 		tokens.push_back(str);
-		str = strtok(NULL, " ");
+		str = std::strtok(NULL, " ");
 	}
 	if (tokens.size() >= 1) {
 		if (tokens[0] == "my_age") {
@@ -196,15 +210,14 @@ void pars_bot_command(std::string command, int &clientSocket) {
 			nickname_bot(tokens[1], clientSocket);
 		}
 	} else
-	{
-		response = "PRIVMSG " + tokens[2] + " " + "Please enter a valide flag" +  " \r\n";
-		bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
-	}
+		std::cout << "Please enter a flaag" << std::endl;
+	return ints;
 }
 
 void signal_handler(int sig) {
 	(void)sig;
 	close(clientSocket);
+	delete fds;
 	exit(1);
 }
 
@@ -213,55 +226,47 @@ int pars_ip(std::string str) {
 	int count = 0;
 	std::string temp_str = str;
 	std::vector<char *> tokens;
-	str2 = strtok((char *)str.c_str(), ".");
+	str2 = std::strtok((char *)str.c_str(), ".");
 	while (str2 != NULL) {
 		tokens.push_back(str2);
-		str2 = strtok(NULL, ".");
+		str2 = std::strtok(NULL, ".");
 	}
 	for (size_t i = 0; i < temp_str.size() ; i++) {
 		if (temp_str[i] == '.')
 			count++;
 	}
-	if (tokens.size() != 4 || count != 3) {
-		std::cerr << "Error about the IP address" << std::endl;
+	if (tokens.size() != 4 || count != 3)
 		return 0;
-	}
 	return 1;
 }
 
-int pars_port(char *av)
-{
-	if (!check_is_int(av) || atol(av) < 1024 || atol(av) > 65535)
-		return 0;
-	return 1;
+int pars_port(char *av) {
+    if (!check_is_int(av) || std::atol(av) < 1024 || std::atol(av) > 65535)
+        return 0;
+    return 1;
 }
 
 int main(int ac, char **av) {
 	if (ac == 4) {
 		std::string _commands;
+		std::string passwrd(av[2]);
 		struct sockaddr_in serverAddr;
 		std::string _cmd;
 		signal(SIGINT, signal_handler);
 		std::vector<int> ints;
-		struct pollfd *fds;
 		char buf[1024];
+		std::string passBuf;
 		int flag;
 		size_t posNL;
 
 		std::memset(&serverAddr, 0, sizeof(serverAddr));
+		if (passwrd.empty() || !pars_ip(av[3]) || !pars_port(av[1])) {
+			std::cerr << "\033[31mWrong parametres !!!\033[0m\nUsage: ./bot port password IP_address\n";
+			return 1;
+		}
 		clientSocket = socket(AF_INET, SOCK_STREAM, 0);
 		serverAddr.sin_family = AF_INET;
-		if (!pars_port(av[1]))
-		{
-			std::cerr << "\033[31mWrong parametres !!!\033[0m\nUsage: ./bot port password IP_address\n";
-			return 1;
-		}
-		serverAddr.sin_port = htons(atol(av[1]));
-		if (!pars_ip(av[3]))
-		{
-			std::cerr << "\033[31mWrong parametres !!!\033[0m\nUsage: ./bot port password IP_address\n";
-			return 1;
-		}
+		serverAddr.sin_port = htons(std::atol(av[1]));
 		serverAddr.sin_addr.s_addr = inet_addr(av[3]);
 		if (connect(clientSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == -1) {
 			std::cout << "Error\nfailed connecting to the server\n";
@@ -269,18 +274,15 @@ int main(int ac, char **av) {
 		} else {
 			std::cout << "Success\nsuccessed connecting to the server\n";
 			std::string password(av[2]);
-			std::string pass_resp = "PASS " + password + "\r\n";
-			send(clientSocket, pass_resp.c_str(), pass_resp.size(), 0);
-			send(clientSocket, "NICK TIGERSBOT\r\n", strlen("NICK TIGERSBOT\r\n"), 0);
-			send(clientSocket, "USER TIGERSBOT 0 * TIGERSBOT\r\n", strlen("USER TIGERSBOT 0 * TIGERSBOT\r\n"), 0);
 		}
-		flag = fcntl(clientSocket, F_GETFL, 0);
-		fcntl(clientSocket, F_SETFL, flag | O_NONBLOCK);
+		fcntl(clientSocket, F_SETFL, O_NONBLOCK);
 		fds = new struct pollfd;
 		fds->fd = clientSocket;
 		fds->events = POLLIN;
 		fds->revents = 0;
 		int res = 0;
+		int firstStart = 0;
+
 		while (1) {
 			res = poll(fds, 1, -1);
 			if (res == -1) {
@@ -288,7 +290,7 @@ int main(int ac, char **av) {
 				return -1;
 			}
 			if (fds->revents & POLLIN) {
-				memset(buf, 0, sizeof(buf));
+				std::memset(buf, 0, sizeof(buf));
 				res = recv(clientSocket, buf, sizeof(buf), 0);
 				if (res == -1) {
 					std::cout << "Error\nrecv failed: " << res << std::endl;
@@ -312,7 +314,26 @@ int main(int ac, char **av) {
 								_cmd = assembleCommand.substr(0, posNL);
 								assembleCommand = assembleCommand.substr(posNL + 1);
 								std::cout << _cmd << std::endl;
-								pars_bot_command(_cmd, clientSocket);
+								if (_cmd.find(":Password incorrect") != std::string::npos) {
+									std::string quit;
+									quit = "QUIT\n";
+									send(clientSocket, quit.c_str(), quit.size(), 0);
+									close (clientSocket);
+									delete fds;
+									return 1;
+								}
+								if (_cmd.find(":Password incorrect") == std::string::npos && firstStart == 1) {
+									send(clientSocket, "NICK TIGERSBOT\r\n", strlen("NICK TIGERSBOT\r\n"), 0);
+									send(clientSocket, "USER TIGERSBOT 0 * TIGERSBOT\r\n", strlen("USER TIGERSBOT 0 * TIGERSBOT\r\n"), 0);
+									firstStart = 2;
+								}
+								if (!firstStart) {
+									std::string pas = "PASS " + passwrd + "\r\n";
+									firstStart = 1;
+									send(clientSocket, pas.c_str(), pas.size(), 0);
+								}
+								if (firstStart == 2)
+									ints = pars_bot_command(_cmd, clientSocket);
 								posNL = assembleCommand.find('\n');
 							}
 						}
@@ -320,6 +341,6 @@ int main(int ac, char **av) {
 			}
 		}
 	} else
-		std::cerr << "Not enough parameters\n";
+		std::cerr << "Error \nNot enough parameters\n";
 	return 0;
 }

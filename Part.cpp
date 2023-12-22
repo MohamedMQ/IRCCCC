@@ -40,11 +40,12 @@ void Server::part_command(Client &client, std::string buffer, int &clientSocket)
 	std::vector<char *> tokens2;
 	std::map<int, Client>::iterator iter;
 	std::string clientIP(client.getClientIP());
+	std::string serverHostname(getServerHost());
 
-	str = strtok((char *)(buffer.c_str() + 5), " ");
+	str = std::strtok((char *)(buffer.c_str() + 5), " ");
 	while (str != NULL) {
 		tokens.push_back(str);
-		str = strtok(NULL, " ");
+		str = std::strtok(NULL, " ");
 	}
 	if (tokens.size() >= 1) {
 		if (tokens.size() >= 2) {
@@ -56,36 +57,36 @@ void Server::part_command(Client &client, std::string buffer, int &clientSocket)
 		}
 		else
 			reason = "";
-		str2 = strtok(tokens[0], ",");
+		str2 = std::strtok(tokens[0], ",");
 		while (str2 != NULL) {
 			tokens2.push_back(str2);
-			str2 = strtok(NULL, ",");
+			str2 = std::strtok(NULL, ",");
 		}
 		while (i < tokens2.size()) {
 			if (tokens2[i][0] == '#') {
 				if (check_channel_if_exist(tokens2[i]) && check_if_client_inside_channel(client, tokens2[i])) {
 					for (iter = _clients.begin(); iter != _clients.end(); iter++) {
 						if (check_if_client_already_joined((*iter).second, tokens2[i])) {
-							response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + clientIP + " PART " + tokens2[i] + " :" + reason + "\r\n";
+							response = ":" + client.get_nickname() + "!" + client.get_username() + "@" + serverHostname + " PART " + tokens2[i] + " :" + reason + "\r\n";
 							bytes_sent = send((*iter).first, response.c_str(), response.size(), 0);
 						}
 					}
 					part_from_channel(client, tokens2[i]);
 				} else if (!check_if_client_inside_channel(client, tokens2[i]) && check_channel_if_exist(tokens2[i])) {
-					response = ":" + client.get_nickname() + " 442 " + client.get_nickname() + " " + tokens2[i] + " :You're not on that channel\r\n";
+					response = ":" + serverHostname + " 442 " + client.get_nickname() + " " + tokens2[i] + " :You're not on that channel\r\n";
 					bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 				} else {
-					response = ":" + client.get_nickname() + " 403 " + client.get_nickname() + " " + tokens2[i] + " :No such channel\r\n";
+					response = ":" + serverHostname + " 403 " + client.get_nickname() + " " + tokens2[i] + " :No such channel\r\n";
 					bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 				}
 			} else {
-				response = ":" + client.get_nickname() + " 403 " + client.get_nickname() + " " + tokens2[i] + " :No such channel\r\n";
+				response = ":" + serverHostname + " 403 " + client.get_nickname() + " " + tokens2[i] + " :No such channel\r\n";
 				bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 			}
 			i++;
 		}
 	} else {
-		response = ":" + client.get_nickname() + " 461 " + client.get_nickname() + " PART :Not enough parameters\r\n";
+		response = ":" + serverHostname + " 461 " + client.get_nickname() + " PART :Not enough parameters\r\n";
 		bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 	}
 }

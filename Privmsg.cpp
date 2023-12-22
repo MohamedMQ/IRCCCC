@@ -21,18 +21,20 @@ void Server::privmsg_command(Client &client, std::string command, int &clientSoc
 	std::vector<std::string> tokens;
 	std::map<int, Client>::iterator iter;
 	std::map<int, Client>::iterator iter2;
-	str = strtok((char *)(command.c_str()), " ");
+	std::string serverHostname(getServerHost());
+
+	str = std::strtok((char *)(command.c_str()), " ");
 	while (str != NULL) {
 		tokens.push_back(str);
-		str = strtok(NULL, " ");
+		str = std::strtok(NULL, " ");
 	}
 	if (tokens.size() < 2) {
-		res = ":" + client.get_nickname() + " 411 " + client.get_nickname() + " :No recipient given (PRIVMSG)\r\n";
+		res = ":" + serverHostname + " 411 " + client.get_nickname() + " :No recipient given (PRIVMSG)\r\n";
 		bytes_sent = send(clientSocket, res.c_str(), res.size(), 0);
 		return;
 	}
 	if (tokens.size() < 3) {
-		res = ":" + client.get_nickname() + " 412 " + client.get_nickname() + " :No text to send\r\n";
+		res = ":" + serverHostname + " 412 " + client.get_nickname() + " :No text to send\r\n";
 		bytes_sent = send(clientSocket, res.c_str(), res.size(), 0);
 		return;
 	} else if (tokens[1] == "TIGERSBOT")
@@ -42,7 +44,7 @@ void Server::privmsg_command(Client &client, std::string command, int &clientSoc
 			if (check_channel_if_exist(tokens[1]))
 				flag = 42;
 			else {
-				res = ":" + client.get_nickname() + " 403 " + client.get_nickname() + " " + tokens[1] + " :No such channel\r\n";
+				res = ":" + serverHostname + " 403 " + client.get_nickname() + " " + tokens[1] + " :No such channel\r\n";
 				bytes_sent = send(clientSocket, res.c_str(), res.size(), 0);
 				return;
 			}
@@ -50,7 +52,7 @@ void Server::privmsg_command(Client &client, std::string command, int &clientSoc
 			if (check_if_client_exist(tokens[1]))
 				flag = 1337;
 			else {
-				res = ":" + client.get_nickname() + " 401 " + client.get_nickname() + " " + tokens[1] + " :No such nick\r\n";
+				res = ":" + serverHostname + " 401 " + client.get_nickname() + " " + tokens[1] + " :No such nick\r\n";
 				bytes_sent = send(clientSocket, res.c_str(), res.size(), 0);
 				return;
 			}
@@ -68,7 +70,7 @@ void Server::privmsg_command(Client &client, std::string command, int &clientSoc
 						if ((*iter2).second.get_nickname() == tokens[1])
 							break;
 					}
-					res = ":" + client.get_nickname() + "!" + client.get_username() + "@" + clientIP + " PRIVMSG " + tokens[1] + " :" + message + "\r\n";
+					res = ":" + client.get_nickname() + "!" + client.get_username() + "@" + serverHostname + " PRIVMSG " + tokens[1] + " :" + message + "\r\n";
 					bytes_sent = send((*iter2).first, res.c_str(), res.size(), 0);
 					(*iter).second.set_private_message((*iter).second.get_nickname(), message);
 					break;
@@ -85,7 +87,7 @@ void Server::privmsg_command(Client &client, std::string command, int &clientSoc
 							message = temp_command.substr(pos);
 						for (iter2 = _clients.begin(); iter2 != _clients.end(); iter2++) {
 							if (check_if_client_already_joined((*iter2).second, tokens[1]) && (*iter2).first != clientSocket) {
-								res = ":" + client.get_nickname() + "!" + client.get_username() + "@" + clientIP + " PRIVMSG " + tokens[1] + " :" + message + "\r\n";
+								res = ":" + client.get_nickname() + "!" + client.get_username() + "@" + serverHostname + " PRIVMSG " + tokens[1] + " :" + message + "\r\n";
 								bytes_sent = send((*iter2).first, res.c_str(), res.size(), 0);
 							}
 						}
@@ -94,7 +96,7 @@ void Server::privmsg_command(Client &client, std::string command, int &clientSoc
 					}
 				}
 			} else {
-				res = ":" + client.get_nickname() + " 403 " + client.get_nickname() + " " + tokens[1] + " :No such channel\r\n";
+				res = ":" + serverHostname + " 403 " + client.get_nickname() + " " + tokens[1] + " :No such channel\r\n";
 				bytes_sent = send(clientSocket, res.c_str(), res.size(), 0);
 			}
 		}

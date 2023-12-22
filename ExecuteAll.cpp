@@ -7,10 +7,10 @@ void Server::fill_client(std::string command, Client &client, int flag) {
 	std::string realname;
 
 	temp_command = command;
-	str = strtok((char *)(command.c_str()), " ");
+	str = std::strtok((char *)(command.c_str()), " ");
 	while (str != NULL) {
 		tokens.push_back(str);
-		str = strtok(NULL, " ");
+		str = std::strtok(NULL, " ");
 	}
 	if (flag == 5) {
 		client.set_username(client.get_nickname());
@@ -29,14 +29,16 @@ void Server::fill_client(std::string command, Client &client, int flag) {
 }
 
 void Server::executeAllCommands(Client &client, std::string buffer, int &clientSocket) {
+	std::string serverHostname(getServerHost());
 	std::string buffer_temp = buffer;
-	char *str;
 	std::vector<std::string> tokens;
 	int bytes_sent;
-	str = strtok((char *)(buffer.c_str()), " ");
+	char *str;
+
+	str = std::strtok((char *)(buffer.c_str()), " ");
 	while (str != NULL) {
 		tokens.push_back(str);
-		str = strtok(NULL, " ");
+		str = std::strtok(NULL, " ");
 	}
 	if (tokens[0] == "USER" && client.get_is_passF())
 		user_command(buffer_temp, client, clientSocket);
@@ -66,7 +68,7 @@ void Server::executeAllCommands(Client &client, std::string buffer, int &clientS
 	else if (!requiredParams(client))
 		params_requirements(client, clientSocket);
 	else {
-		std::string response = ":" + this->getServerName() + " 421 " + client.get_nickname() + tokens[0] + " :Unknown command\r\n";
+		std::string response = ":" + serverHostname + " 421 " + client.get_nickname() + tokens[0] + " :Unknown command\r\n";
 		bytes_sent = send(clientSocket, response.c_str(), response.size(), 0);
 	}
 }
